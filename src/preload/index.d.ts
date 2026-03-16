@@ -2,7 +2,8 @@ import { ElectronAPI } from '@electron-toolkit/preload'
 
 declare global {
   interface Window {
-    electron: ElectronAPI
-    api: unknown
+    electron: ElectronAPI,
+    // Empty object to be defined later
+    context: Record<string, never>
   }
 }
