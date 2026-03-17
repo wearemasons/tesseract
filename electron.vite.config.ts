@@ -24,7 +24,6 @@ export default defineConfig({
     }
   },
   renderer: {
-    assetsInclude: 'src/renderer/src/assets/**',
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src'),
