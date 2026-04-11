@@ -1,95 +1,101 @@
-import { atom, Setter, WritableAtom } from 'jotai'
+import { NoteContent, NoteInfo } from '@shared/model'
+import { atom } from 'jotai'
 import { unwrap } from 'jotai/utils'
-import { NoteInfo, NoteContent } from '@shared/model'
-import { mockNotes, emptyNoteContent } from '@/data/mockNotes'
 
-// Notes list atom - initialized from mock data
-export const notesAtom = atom<NoteInfo[]>(mockNotes)
+const loadNotes = async () => {
+  const notes = await window.context.getNotes()
 
-// Selected note index atom
+  return notes.sort((a, b) => b.lastEditTime - a.lastEditTime)
+}
+
+const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(loadNotes())
+
+export const notesAtom = unwrap(notesAtomAsync, (prev) => prev)
+
 export const selectedNoteIndexAtom = atom<number | null>(null)
 
-// Async atom that reads note content via window.context.readNote
-const selectedNoteAtomAsync = atom(
-  async (get): Promise<{ info: NoteInfo; content: NoteContent }> => {
-    const notes = get(notesAtom)
-    const selectedIndex = get(selectedNoteIndexAtom)
+const selectedNoteAtomAsync = atom(async (get) => {
+  const notes = get(notesAtom)
+  const selectedNoteIndex = get(selectedNoteIndexAtom)
 
-    if (notes === undefined || selectedIndex === null || selectedIndex >= notes.length) {
-      return { info: { title: '', lastEditTime: 0 }, content: emptyNoteContent }
-    }
+  if (selectedNoteIndex == null || !notes) return null
 
-    const noteInfo = notes[selectedIndex]
-    const content = await window.context.readNote(noteInfo.title)
+  const selectedNote = notes[selectedNoteIndex]
 
-    return { info: noteInfo, content }
+  const noteContent = await window.context.readNote(selectedNote.title)
+
+  return {
+    ...selectedNote,
+    content: noteContent
   }
-)
+})
 
-// Unwrapped atom with fallback to empty note
 export const selectedNoteAtom = unwrap(
   selectedNoteAtomAsync,
-  (prev) => prev ?? { info: { title: '', lastEditTime: 0 }, content: emptyNoteContent }
+  (prev) =>
+    prev ?? {
+      title: '',
+      content: '',
+      lastEditTime: Date.now()
+    }
 )
 
-// Create empty note atom
-export const createEmptyNoteAtom = atom(null, async (get, set) => {
-  const result = await window.context.createNote()
-
-  if (result === false) {
-    return
-  }
-
+export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent) => {
   const notes = get(notesAtom)
-  const newNoteInfo: NoteInfo = {
-    title: result,
+  const selectedNote = get(selectedNoteAtom)
+
+  if (!selectedNote || !notes) return
+
+  await window.context.writeNote(selectedNote.title, newContent)
+
+  set(
+    notesAtom,
+    notes.map((note) => {
+      if (note.title === selectedNote.title) {
+        return {
+          ...note,
+          lastEditTime: Date.now()
+        }
+      }
+
+      return note
+    })
+  )
+})
+
+export const createEmptyNoteAtom = atom(null, async (get, set) => {
+  const notes = get(notesAtom)
+
+  if (!notes) return
+
+  const title = await window.context.createNote()
+
+  if (!title) return
+
+  const newNote: NoteInfo = {
+    title,
     lastEditTime: Date.now()
   }
 
-  set(notesAtom, [...notes, newNoteInfo])
-  set(selectedNoteIndexAtom, notes.length)
+  set(notesAtom, [newNote, ...notes.filter((note) => note.title !== newNote.title)])
+
+  set(selectedNoteIndexAtom, 0)
 })
 
-// Delete note atom
 export const deleteNoteAtom = atom(null, async (get, set) => {
   const notes = get(notesAtom)
-  const selectedIndex = get(selectedNoteIndexAtom)
+  const selectedNote = get(selectedNoteAtom)
 
-  if (selectedIndex === null || notes === undefined) {
-    return
-  }
+  if (!selectedNote || !notes) return
 
-  const noteToDelete = notes[selectedIndex]
-  const success = await window.context.deleteNote(noteToDelete.title)
+  const isDeleted = await window.context.deleteNote(selectedNote.title)
 
-  if (!success) {
-    return
-  }
+  if (!isDeleted) return
 
-  const updatedNotes = notes.filter((_, index) => index !== selectedIndex)
-  set(notesAtom, updatedNotes)
-
-  // Select adjacent note or null if no notes left
-  const newIndex = selectedIndex >= updatedNotes.length ? null : selectedIndex
-  set(selectedNoteIndexAtom, newIndex)
-})
-
-// Save note atom
-export const saveNoteAtom = atom(null, async (get, set, content: NoteContent) => {
-  const notes = get(notesAtom)
-  const selectedIndex = get(selectedNoteIndexAtom)
-
-  if (selectedIndex === null || notes === undefined) {
-    return
-  }
-
-  const noteToSave = notes[selectedIndex]
-  await window.context.writeNote(noteToSave.title, content)
-
-  // Update lastEditTime
-  const updatedNotes = notes.map((note, index) =>
-    index === selectedIndex ? { ...note, lastEditTime: Date.now() } : note
+  set(
+    notesAtom,
+    notes.filter((note) => note.title !== selectedNote.title)
   )
 
-  set(notesAtom, updatedNotes)
+  set(selectedNoteIndexAtom, null)
 })
