@@ -17,6 +17,9 @@ export default defineConfig({
     }
   },
   preload: {
+    build: {
+      externalizeDeps: false
+    },
     resolve: {
       alias: {
         '@shared': resolve('src/shared')

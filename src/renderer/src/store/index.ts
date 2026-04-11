@@ -1,12 +1,15 @@
 import { NoteContent, NoteInfo } from '@shared/model'
 import { atom } from 'jotai'
 import { unwrap } from 'jotai/utils'
-import { notesMock, noteContentMock } from '@/store/mocks'
 
-// --- Mock data until real FS support ---
-const initialNotes = [...notesMock].sort((a, b) => b.lastEditTime - a.lastEditTime)
-const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(initialNotes)
-export const notesAtom = unwrap(notesAtomAsync, (prev) => prev)
+// --- Async atom to load notes from file system ---
+const loadNotes = async (): Promise<NoteInfo[]> => {
+  const notes = await window.context.getNotes()
+  return notes.sort((a, b) => b.lastEditTime - a.lastEditTime)
+}
+
+const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(loadNotes())
+export const notesAtom = unwrap(notesAtomAsync, (prev) => prev ?? undefined)
 
 export const selectedNoteIndexAtom = atom<number | null>(null)
 
@@ -18,9 +21,17 @@ const selectedNoteAtomAsync = atom(async (get) => {
 
   const selectedNote = notes[selectedNoteIndex]
 
-  return {
-    ...selectedNote,
-    content: noteContentMock[selectedNote.title] ?? ''
+  try {
+    const content = await window.context.readNote(selectedNote.title)
+    return {
+      ...selectedNote,
+      content
+    }
+  } catch {
+    return {
+      ...selectedNote,
+      content: ''
+    }
   }
 })
 
@@ -40,9 +51,10 @@ export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent)
 
   if (!selectedNote || !notes) return
 
-  // Update mock content in memory
-  noteContentMock[selectedNote.title] = newContent
+  // Write to file system
+  await window.context.writeNote(selectedNote.title, newContent)
 
+  // Update notes list with new timestamp
   set(
     notesAtom,
     notes.map((note) => {
@@ -58,18 +70,20 @@ export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent)
 })
 
 export const createEmptyNoteAtom = atom(null, async (get, set) => {
-  const notes = get(notesAtom)
-  if (!notes) return
+  const newTitle = await window.context.createNote()
+  if (!newTitle) return
 
-  const newTitle = `New Note ${notes.length + 1}`
+  const notes = get(notesAtom)
   const newNote: NoteInfo = {
     title: newTitle,
     lastEditTime: Date.now()
   }
 
-  noteContentMock[newTitle] = `# ${newTitle}\n\nStart writing...`
-
-  set(notesAtom, [newNote, ...notes.filter((note) => note.title !== newNote.title)])
+  if (notes) {
+    set(notesAtom, [newNote, ...notes.filter((note) => note.title !== newNote.title)])
+  } else {
+    set(notesAtom, [newNote])
+  }
   set(selectedNoteIndexAtom, 0)
 })
 
@@ -79,7 +93,8 @@ export const deleteNoteAtom = atom(null, async (get, set) => {
 
   if (!selectedNote || !notes) return
 
-  delete noteContentMock[selectedNote.title]
+  const deleted = await window.context.deleteNote(selectedNote.title)
+  if (!deleted) return
 
   set(
     notesAtom,

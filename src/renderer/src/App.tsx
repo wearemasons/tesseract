@@ -12,7 +12,7 @@ function App(): JSX.Element {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-zinc-950 text-white">
+    <div className="relative flex flex-col h-screen w-screen bg-zinc-950 text-white">
       <DraggableTopBar />
       <RootLayout>
         <Sidebar className="p-2">
