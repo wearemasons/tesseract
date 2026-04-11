@@ -3,9 +3,9 @@ import { atom } from 'jotai'
 import { unwrap } from 'jotai/utils'
 
 const loadNotes = async () => {
-  const notes = await window.context.getNotes()
+  const notes = await window.context?.getNotes()
 
-  return notes.sort((a, b) => b.lastEditTime - a.lastEditTime)
+  return (notes || []).sort((a, b) => b.lastEditTime - a.lastEditTime)
 }
 
 const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(loadNotes())
@@ -22,7 +22,7 @@ const selectedNoteAtomAsync = atom(async (get) => {
 
   const selectedNote = notes[selectedNoteIndex]
 
-  const noteContent = await window.context.readNote(selectedNote.title)
+  const noteContent = await window.context?.readNote(selectedNote.title)
 
   return {
     ...selectedNote,
@@ -46,7 +46,7 @@ export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent)
 
   if (!selectedNote || !notes) return
 
-  await window.context.writeNote(selectedNote.title, newContent)
+  await window.context?.writeNote(selectedNote.title, newContent)
 
   set(
     notesAtom,
@@ -68,7 +68,7 @@ export const createEmptyNoteAtom = atom(null, async (get, set) => {
 
   if (!notes) return
 
-  const title = await window.context.createNote()
+  const title = await window.context?.createNote()
 
   if (!title) return
 
@@ -88,7 +88,7 @@ export const deleteNoteAtom = atom(null, async (get, set) => {
 
   if (!selectedNote || !notes) return
 
-  const isDeleted = await window.context.deleteNote(selectedNote.title)
+  const isDeleted = await window.context?.deleteNote(selectedNote.title)
 
   if (!isDeleted) return
 
