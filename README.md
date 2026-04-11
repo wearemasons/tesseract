@@ -11,6 +11,7 @@ Tesseract starts as a clean, distraction-free note-taking app. Under the hood, i
 The current version is a fully functional desktop note editor built with Electron + React. No cloud. No accounts. Your notes live as plain `.md` files on your machine.
 
 **Features:**
+
 - Real-time Markdown rendering via MDX Editor
 - Auto-save with 3s throttle + save-on-blur
 - Sidebar with note list sorted by last edited
@@ -35,7 +36,7 @@ A local sentiment analysis engine reads your writing in real-time and detects yo
 
 ### Dynamic Tooling
 
-Intent detection triggers purpose-built tools automatically. Write *"I need to plan my week"* and instead of a chat bubble, a time-planning agent spins up, generates schedule variations, and writes the result directly into your Markdown file with checkboxes.
+Intent detection triggers purpose-built tools automatically. Write _"I need to plan my week"_ and instead of a chat bubble, a time-planning agent spins up, generates schedule variations, and writes the result directly into your Markdown file with checkboxes.
 
 ### Total Recall (RAG)
 
@@ -55,14 +56,14 @@ You watch the debate, then make the final call as the Judge.
 
 ## Tech Stack
 
-| Layer | Tech |
-|---|---|
-| Desktop shell | Electron + electron-vite |
-| UI | React + TypeScript + Tailwind CSS |
-| Editor | MDX Editor |
-| State | Jotai |
-| File system | fs-extra |
-| AI (full version) | OpenRouter |
+| Layer             | Tech                              |
+| ----------------- | --------------------------------- |
+| Desktop shell     | Electron + electron-vite          |
+| UI                | React + TypeScript + Tailwind CSS |
+| Editor            | MDX Editor                        |
+| State             | Jotai                             |
+| File system       | fs-extra                          |
+| AI (full version) | OpenRouter                        |
 
 Notes are stored as `.md` files under `~/NoteShark/` on your machine.
 

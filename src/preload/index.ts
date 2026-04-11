@@ -6,7 +6,9 @@ if (!process.contextIsolated) {
 }
 
 try {
-  contextBridge.exposeInMainWorld('electron', electronAPI)
+  contextBridge.exposeInMainWorld('electron', {
+    locale: navigator.language
+  })
   contextBridge.exposeInMainWorld('context', {})
 } catch (error) {
   console.error(error)
