@@ -1,5 +1,5 @@
 import { JSX, useRef } from 'react'
-import { Content, DraggableTopBar, MarkdownEditor, NotePreviewList, RootLayout, Sidebar } from './components'
+import { Content, DraggableTopBar, FloatingNoteTitle, MarkdownEditor, NotePreviewList, RootLayout, Sidebar } from './components'
 import { ActionButtonsRow } from './components/ActionButtonRow'
 
 function App(): JSX.Element {
@@ -20,6 +20,7 @@ function App(): JSX.Element {
           <NotePreviewList className="mt-3 space-y-1" onSelect={resetScroll} />
         </Sidebar>
         <Content ref={contentContainerRef} className="border-l border-l-white/20 bg-zinc-900/50">
+          <FloatingNoteTitle className='pt-2' />
           <MarkdownEditor className="pt-2" />
         </Content>
       </RootLayout>
