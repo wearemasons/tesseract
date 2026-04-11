@@ -1,12 +1,5 @@
 import { JSX, useRef } from 'react'
-import {
-  Content,
-  DraggableTopBar,
-  MarkdownEditor,
-  NotePreviewList,
-  RootLayout,
-  Sidebar
-} from './components'
+import { Content, DraggableTopBar, FloatingNoteTitle, MarkdownEditor, NotePreviewList, RootLayout, Sidebar } from './components'
 import { ActionButtonsRow } from './components/ActionButtonRow'
 
 function App(): JSX.Element {
@@ -21,17 +14,16 @@ function App(): JSX.Element {
   return (
     <div className="relative flex flex-col h-screen w-screen bg-zinc-950 text-white">
       <DraggableTopBar />
-      <div className="pt-8 flex-1 overflow-hidden">
-        <RootLayout>
-          <Sidebar className="p-2">
-            <ActionButtonsRow className="flex justify-between mt-1" />
-            <NotePreviewList className="mt-3 space-y-1" onSelect={resetScroll} />
-          </Sidebar>
-          <Content ref={contentContainerRef} className="border-l border-l-white/20 bg-zinc-900/50">
-            <MarkdownEditor className="pt-2" />
-          </Content>
-        </RootLayout>
-      </div>
+      <RootLayout>
+        <Sidebar className="p-2">
+          <ActionButtonsRow className="flex justify-between mt-1" />
+          <NotePreviewList className="mt-3 space-y-1" onSelect={resetScroll} />
+        </Sidebar>
+        <Content ref={contentContainerRef} className="border-l border-l-white/20 bg-zinc-900/50">
+          <FloatingNoteTitle className='pt-2' />
+          <MarkdownEditor className="pt-2" />
+        </Content>
+      </RootLayout>
     </div>
   )
 }
