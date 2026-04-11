@@ -1,15 +1,11 @@
 import { NoteContent, NoteInfo } from '@shared/model'
 import { atom } from 'jotai'
 import { unwrap } from 'jotai/utils'
+import { notesMock, noteContentMock } from '@/store/mocks'
 
-const loadNotes = async () => {
-  const notes = await window.context?.getNotes()
-
-  return (notes || []).sort((a, b) => b.lastEditTime - a.lastEditTime)
-}
-
-const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(loadNotes())
-
+// --- Mock data until real FS support ---
+const initialNotes = [...notesMock].sort((a, b) => b.lastEditTime - a.lastEditTime)
+const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(initialNotes)
 export const notesAtom = unwrap(notesAtomAsync, (prev) => prev)
 
 export const selectedNoteIndexAtom = atom<number | null>(null)
@@ -22,11 +18,9 @@ const selectedNoteAtomAsync = atom(async (get) => {
 
   const selectedNote = notes[selectedNoteIndex]
 
-  const noteContent = await window.context?.readNote(selectedNote.title)
-
   return {
     ...selectedNote,
-    content: noteContent
+    content: noteContentMock[selectedNote.title] ?? ''
   }
 })
 
@@ -46,7 +40,8 @@ export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent)
 
   if (!selectedNote || !notes) return
 
-  await window.context?.writeNote(selectedNote.title, newContent)
+  // Update mock content in memory
+  noteContentMock[selectedNote.title] = newContent
 
   set(
     notesAtom,
@@ -57,7 +52,6 @@ export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent)
           lastEditTime: Date.now()
         }
       }
-
       return note
     })
   )
@@ -65,20 +59,17 @@ export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent)
 
 export const createEmptyNoteAtom = atom(null, async (get, set) => {
   const notes = get(notesAtom)
-
   if (!notes) return
 
-  const title = await window.context?.createNote()
-
-  if (!title) return
-
+  const newTitle = `New Note ${notes.length + 1}`
   const newNote: NoteInfo = {
-    title,
+    title: newTitle,
     lastEditTime: Date.now()
   }
 
-  set(notesAtom, [newNote, ...notes.filter((note) => note.title !== newNote.title)])
+  noteContentMock[newTitle] = `# ${newTitle}\n\nStart writing...`
 
+  set(notesAtom, [newNote, ...notes.filter((note) => note.title !== newNote.title)])
   set(selectedNoteIndexAtom, 0)
 })
 
@@ -88,14 +79,11 @@ export const deleteNoteAtom = atom(null, async (get, set) => {
 
   if (!selectedNote || !notes) return
 
-  const isDeleted = await window.context?.deleteNote(selectedNote.title)
-
-  if (!isDeleted) return
+  delete noteContentMock[selectedNote.title]
 
   set(
     notesAtom,
     notes.filter((note) => note.title !== selectedNote.title)
   )
-
   set(selectedNoteIndexAtom, null)
 })
