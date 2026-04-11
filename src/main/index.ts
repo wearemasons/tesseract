@@ -2,10 +2,13 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
+import { createNote, deleteNote, getNotes, readNote, writeNote } from '@main/lib'
+
+let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
@@ -29,10 +32,10 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow!.show()
   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
+  mainWindow!.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
@@ -61,7 +64,25 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.on('ping', () => console.info('pong'))
+
+  // Window control IPC handlers
+  ipcMain.on('window-minimize', () => mainWindow?.minimize())
+  ipcMain.on('window-maximize', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow?.maximize()
+    }
+  })
+  ipcMain.on('window-close', () => mainWindow?.close())
+
+  // Note file system IPC handlers
+  ipcMain.handle('getNotes', () => getNotes())
+  ipcMain.handle('readNote', (_, title: string) => readNote(title))
+  ipcMain.handle('writeNote', (_, title: string, content: string) => writeNote(title, content))
+  ipcMain.handle('createNote', () => createNote())
+  ipcMain.handle('deleteNote', (_, title: string) => deleteNote(title))
 
   createWindow()
 
