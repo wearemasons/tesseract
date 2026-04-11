@@ -1,5 +1,5 @@
 import { JSX, useRef } from 'react'
-import { Content, DraggableTopBar, NotePreviewList, RootLayout, Sidebar } from './components'
+import { Content, DraggableTopBar, MarkdownEditor, NotePreviewList, RootLayout, Sidebar } from './components'
 import { ActionButtonsRow } from './components/ActionButtonRow'
 
 function App(): JSX.Element {
@@ -20,10 +20,7 @@ function App(): JSX.Element {
           <NotePreviewList className="mt-3 space-y-1" onSelect={resetScroll} />
         </Sidebar>
         <Content ref={contentContainerRef} className="border-l border-l-white/20 bg-zinc-900/50">
-          <div className="p-4">
-            <h1 className="text-2xl font-bold text-white">Content Area</h1>
-            <p className="text-zinc-300 mt-2">If you can see this, React is working</p>
-          </div>
+          <MarkdownEditor className="pt-2" />
         </Content>
       </RootLayout>
     </div>
