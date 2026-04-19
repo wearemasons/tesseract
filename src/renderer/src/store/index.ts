@@ -1,4 +1,4 @@
-import { NoteContent, NoteInfo } from '@shared/model'
+import { NoteContent, NoteInfo } from '@shared/models'
 import { atom } from 'jotai'
 import { unwrap } from 'jotai/utils'
 

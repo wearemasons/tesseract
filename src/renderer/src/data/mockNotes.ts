@@ -1,4 +1,4 @@
-import { NoteInfo } from '@shared/model'
+import { NoteInfo } from '@shared/models'
 
 export const mockNotes: NoteInfo[] = [
   { title: 'Getting Started', lastEditTime: Date.now() - 3600000 },

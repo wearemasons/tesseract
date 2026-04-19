@@ -14,10 +14,10 @@ function createWindow(): void {
     show: false,
     center: true,
     title: 'Tesseract',
-    frame: false,
+    frame: true,
     vibrancy: 'under-window',
     visualEffectState: 'active',
-    titleBarStyle: 'hidden',
+    titleBarStyle: 'default',
     trafficLightPosition: {
       x: 15,
       y: 10
