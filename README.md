@@ -65,7 +65,7 @@ You watch the debate, then make the final call as the Judge.
 | File system       | fs-extra                          |
 | AI (full version) | OpenRouter                        |
 
-Notes are stored as `.md` files under `~/NoteShark/` on your machine.
+Notes are stored as `.md` files under `~/Tesseract/` on your machine.
 
 ---
 
