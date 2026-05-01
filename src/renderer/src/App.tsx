@@ -59,12 +59,12 @@ function App(): JSX.Element {
           </Sidebar>
         )}
 
-        <Content ref={contentContainerRef} className="flex-1 flex flex-col overflow-hidden relative">
+        <Content className="flex-1 flex flex-col overflow-hidden relative">
           {mode === 'council' ? (
             <CouncilArena />
           ) : (
             <div className="flex-1 flex overflow-hidden">
-              <div className="flex-1 flex flex-col overflow-hidden">
+              <div ref={contentContainerRef} className="flex-1 flex flex-col overflow-y-auto">
                 <FloatingNoteTitle className="pt-2" />
                 <MarkdownEditor className="pt-2 flex-1" />
               </div>

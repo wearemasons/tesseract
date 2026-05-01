@@ -101,3 +101,16 @@ export async function deleteNote(title: NoteInfo['title']): Promise<boolean> {
   await fs.remove(filePath)
   return true
 }
+
+export async function readWorkspaceFile(filePath: string): Promise<string> {
+  try {
+    const absolutePath = path.resolve(process.cwd(), filePath)
+    if (fs.existsSync(absolutePath)) {
+      return await fs.readFile(absolutePath, fileEncoding)
+    }
+    throw new Error(`File not found: ${absolutePath}`)
+  } catch (error) {
+    console.error('Failed to read workspace file:', error)
+    throw error
+  }
+}

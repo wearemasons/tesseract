@@ -8,6 +8,21 @@ export const appModeAtom = atom<AppMode>('notes')
 export type Theme = 'light' | 'dark' | 'system'
 export const themeAtom = atom<Theme>('dark')
 
+export interface AIMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+export const aiMessagesAtom = atom<AIMessage[]>([])
+
+export type CouncilPersona = 'visionary' | 'skeptic' | 'pragmatist' | 'synthesizer' | 'user'
+export interface CouncilMessage {
+  id: string
+  persona: CouncilPersona
+  content: string
+  timestamp: number
+}
+export const councilMessagesAtom = atom<CouncilMessage[]>([])
+
 // --- Async atom to load notes from file system ---
 const loadNotes = async (): Promise<NoteInfo[]> => {
   const notes = await window.context.getNotes()
