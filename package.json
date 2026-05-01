@@ -24,11 +24,14 @@
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@mdxeditor/editor": "^3.54.0",
-    "convex": "^1.32.0",
+    "@radix-ui/react-slot": "^1.2.4",
+    "class-variance-authority": "^0.7.1",
     "electron-updater": "^6.3.9",
     "fs-extra": "^11.3.4",
     "jotai": "^2.19.1",
-    "lodash": "^4.18.1"
+    "lodash": "^4.18.1",
+    "lucide-react": "^1.14.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

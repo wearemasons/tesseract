@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 import { homedir } from 'os'
 import path from 'path'
 import { appDirectoryName, fileEncoding, welcomeNoteFilename } from '@shared/constants'
-import { NoteInfo } from '@shared/model'
+import { NoteInfo } from '@shared/models'
 import { getWelcomeNoteAssetPath } from '@main/assets'
 
 export function getRootDir(): string {

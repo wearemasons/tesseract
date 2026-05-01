@@ -2,6 +2,12 @@ import { NoteContent, NoteInfo } from '@shared/models'
 import { atom } from 'jotai'
 import { unwrap } from 'jotai/utils'
 
+export type AppMode = 'notes' | 'ai' | 'council'
+export const appModeAtom = atom<AppMode>('notes')
+
+export type Theme = 'light' | 'dark' | 'system'
+export const themeAtom = atom<Theme>('dark')
+
 // --- Async atom to load notes from file system ---
 const loadNotes = async (): Promise<NoteInfo[]> => {
   const notes = await window.context.getNotes()
