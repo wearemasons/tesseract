@@ -24,7 +24,10 @@ function extractResponseText(response: any): string {
   const responseParts = parts.filter((p: any) => !p.thought)
   const textParts = responseParts.length > 0 ? responseParts : parts
 
-  return textParts.map((p: any) => p.text || '').join('').trim()
+  return textParts
+    .map((p: any) => p.text || '')
+    .join('')
+    .trim()
 }
 
 /**
@@ -79,7 +82,7 @@ export async function generateAIResponse(
 
   try {
     const response = await client.models.generateContent({
-      model: 'gemma-4-31b-it',
+      model: 'gemma-4-26b-a4b-it',
       contents
     })
 
@@ -97,7 +100,7 @@ export async function generateAutocomplete(textBefore: string): Promise<string> 
 
   try {
     const response = await client.models.generateContent({
-      model: 'gemma-4-31b-it',
+      model: 'gemma-3-1B',
       contents: [
         {
           role: 'user',
