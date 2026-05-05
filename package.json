@@ -24,7 +24,6 @@
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@mdxeditor/editor": "^3.54.0",
-    "convex": "^1.32.0",
     "electron-updater": "^6.3.9",
     "fs-extra": "^11.3.4",
     "jotai": "^2.19.1",
@@ -57,7 +56,7 @@
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
-    "vite": "^7.2.6"
+    "vite": "^6.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
