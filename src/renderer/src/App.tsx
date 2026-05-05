@@ -1,7 +1,7 @@
 import { JSX, useRef } from 'react'
 import {
+  ActivityBar,
   Content,
-  DraggableTopBar,
   FloatingNoteTitle,
   MarkdownEditor,
   NotePreviewList,
@@ -20,16 +20,28 @@ function App(): JSX.Element {
   }
 
   return (
-    <div className="relative flex flex-col h-screen w-screen bg-zinc-950 text-white">
-      {/*<DraggableTopBar />*/}
-      <RootLayout>
-        <Sidebar className="p-2">
+    <div className="relative flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden">
+      {/* DraggableTopBar can be uncommented here if needed for Electron framing */}
+      {/* <DraggableTopBar /> */}
+      
+      <RootLayout className="flex-1 flex overflow-hidden">
+        <ActivityBar />
+        
+        <Sidebar className="p-2 border-r border-border bg-card/30">
           <ActionButtonsRow className="flex justify-between mt-1" />
           <NotePreviewList className="mt-3 space-y-1" onSelect={resetScroll} />
         </Sidebar>
-        <Content ref={contentContainerRef} className="border-l border-l-white/20 bg-zinc-900/50">
-          <FloatingNoteTitle className="pt-2" />
-          <MarkdownEditor className="pt-2" />
+
+        <Content className="flex-1 flex flex-col overflow-hidden relative">
+          <div className="flex-1 flex overflow-hidden">
+            <div 
+              ref={contentContainerRef} 
+              className="flex-1 flex flex-col overflow-y-auto"
+            >
+              <FloatingNoteTitle className="pt-2" />
+              <MarkdownEditor className="pt-2 flex-1" />
+            </div>
+          </div>
         </Content>
       </RootLayout>
     </div>
