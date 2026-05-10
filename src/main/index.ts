@@ -12,6 +12,8 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
+    minWidth: 800,
+    minHeight: 500,
     show: false,
     center: true,
     title: 'Tesseract',
@@ -87,7 +89,11 @@ app.whenReady().then(() => {
   ipcMain.handle('deleteNote', (_, title: string) => deleteNote(title))
 
   // AI IPC handlers
-  ipcMain.handle('ai:generate', (_, prompt: string, history?: any[], context?: string, customSystemPrompt?: string) => generateAIResponse(prompt, history, context, customSystemPrompt))
+  ipcMain.handle(
+    'ai:generate',
+    (_, prompt: string, history?: any[], context?: string, customSystemPrompt?: string) =>
+      generateAIResponse(prompt, history, context, customSystemPrompt)
+  )
   ipcMain.handle('ai:autocomplete', (_, textBefore: string) => generateAutocomplete(textBefore))
 
   createWindow()

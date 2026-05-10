@@ -1,39 +1,39 @@
-# Welcome to Tesseract! 🦈
+# Welcome to Tesseract
 
-Welcome to your new note-taking app! Here's a quick guide to help you get started.
+A local-first, AI-enhanced markdown notebook.
 
-## Features
+Tesseract is your thinking environment — a place to write notes, converse with AI about them, and even convene a council of personas to pressure-test your ideas.
 
-### 📝 Rich Markdown Editing
+## Modes
 
-Tesseract uses a powerful Markdown editor that supports:
+The ActivityBar on the left lets you switch between three modes:
 
-- **Headings** - Use `#`, `##`, `###` for different heading levels
-- **Lists** - Create ordered and unordered lists
-- **Quotes** - Add blockquotes with `>`
-- **Code** - Inline `code` and code blocks with syntax highlighting
+- **Notes** — Write and manage markdown notes with a rich editor. Notes auto-save to `~/Tesseract/Notes/` as plain `.md` files.
+- **AI** — An AI sidebar companion that can answer questions about your current note. Type `/write` to have the AI rewrite the full note for you.
+- **Council** — A multi-perspective think-tank where AI personas (Visionary, Skeptic, Pragmatist) debate your ideas.
 
-### ⚡ Auto-Save
+## Command Palette
 
-Your notes are automatically saved as you type:
+Press `Ctrl+K` to open the command palette, where you can adjust the editor font size, toggle autocomplete, switch light/dark theme, or pick a color theme.
 
-- Changes are saved **3 seconds** after you stop typing
-- You can also click outside the editor to force an immediate save
+## Keyboard Shortcuts
 
-### 🗂️ Managing Notes
+| Shortcut | Action |
+|---|---|
+| `Ctrl+K` | Open command palette |
+| `Ctrl+B` | Toggle notes sidebar |
+| `Ctrl+Shift+B` | Toggle AI sidebar |
+| `Alt+A` | Toggle code autocomplete |
+| `Ctrl+Space` / `Tab` | Accept autocomplete suggestion |
 
-- **Create a new note**: Click the ✏️ button in the sidebar
-- **Delete a note**: Click the 🗑️ button (you'll be asked to confirm)
-- **Switch between notes**: Click any note in the sidebar to view/edit it
+## Color Themes
 
-### 💡 Tips
+Press `Ctrl+K`, search for "Pick Theme", and choose from a growing set of color themes. Each theme overrides the app's palette via CSS custom properties.
 
-- Notes are stored in your home directory under `~/Tesseract/Notes/`
-- All files are standard Markdown (`.md`) files, so you can use them with other tools
-- The editor supports keyboard shortcuts for common formatting
+## Notes
+
+All your notes are just markdown files on disk — no lock-in. Create, edit, delete, and organize them freely from the sidebar.
 
 ---
 
-**Ready to go!** Create your first note or start editing this one.
-
-Happy writing! ✨
+**Start writing, thinking, or debating.**

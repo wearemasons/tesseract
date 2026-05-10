@@ -1,13 +1,15 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { MDXEditorMethods } from '@mdxeditor/editor'
 import { throttle } from 'lodash'
-import { selectedNoteAtom, saveNoteAtom } from '@/store'
+import { selectedNoteAtom, saveNoteAtom, pendingWriteContentAtom } from '@/store'
 import { autoSavingTime } from '@shared/constants'
 
 export function useMarkdownEditor() {
   const selectedNote = useAtomValue(selectedNoteAtom)
   const saveNote = useSetAtom(saveNoteAtom)
+  const pendingWriteContent = useAtomValue(pendingWriteContentAtom)
+  const setPendingWriteContent = useSetAtom(pendingWriteContentAtom)
   const editorRef = useRef<MDXEditorMethods | null>(null)
 
   const throttledSave = useRef(
@@ -31,6 +33,13 @@ export function useMarkdownEditor() {
       saveNote(content)
     }
   }
+
+  useEffect(() => {
+    if (pendingWriteContent && editorRef.current) {
+      editorRef.current.setMarkdown(pendingWriteContent)
+      setPendingWriteContent(null)
+    }
+  }, [pendingWriteContent, setPendingWriteContent])
 
   return { selectedNote, editorRef, handleAutoSaving, handleBlur }
 }

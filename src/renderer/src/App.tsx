@@ -1,4 +1,4 @@
-import { JSX, useRef } from 'react'
+import { JSX, useRef, useEffect } from 'react'
 import {
   ActivityBar,
   AICompanion,
@@ -10,15 +10,64 @@ import {
   NotePreviewList,
   ResizableSidebar,
   RootLayout,
-  Sidebar
+  Sidebar,
+  CommandPalette,
+  ThemePicker
 } from './components'
 import { ActionButtonsRow } from './components/ActionButtonRow'
-import { useAtomValue } from 'jotai'
-import { appModeAtom } from './store'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { appModeAtom, commandPaletteOpenAtom, activeThemeCssAtom, notesSidebarOpenAtom } from './store'
 
 function App(): JSX.Element {
   const contentContainerRef = useRef<HTMLDivElement>(null)
   const mode = useAtomValue(appModeAtom)
+  const notesSidebarOpen = useAtomValue(notesSidebarOpenAtom)
+  const setCommandPaletteOpen = useSetAtom(commandPaletteOpenAtom)
+  const setNotesSidebar = useSetAtom(notesSidebarOpenAtom)
+  const setMode = useSetAtom(appModeAtom)
+  const activeThemeCss = useAtomValue(activeThemeCssAtom)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        e.stopPropagation()
+        setCommandPaletteOpen((prev) => !prev)
+        return
+      }
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'b') {
+        e.preventDefault()
+        e.stopPropagation()
+        setNotesSidebar((prev) => !prev)
+        return
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'B') {
+        e.preventDefault()
+        e.stopPropagation()
+        setMode((prev) => (prev === 'ai' ? 'notes' : 'ai'))
+      }
+    }
+    document.addEventListener('keydown', handler, { capture: true })
+    return () => document.removeEventListener('keydown', handler, { capture: true })
+  }, [setCommandPaletteOpen, setNotesSidebar, setMode])
+
+  useEffect(() => {
+    const existing = document.getElementById('theme-css')
+    if (existing) {
+      existing.remove()
+    }
+    if (activeThemeCss) {
+      const link = document.createElement('link')
+      link.id = 'theme-css'
+      link.rel = 'stylesheet'
+      link.href = activeThemeCss
+      document.head.appendChild(link)
+    }
+    return () => {
+      const el = document.getElementById('theme-css')
+      if (el) el.remove()
+    }
+  }, [activeThemeCss])
 
   const resetScroll = () => {
     if (contentContainerRef.current) {
@@ -28,11 +77,13 @@ function App(): JSX.Element {
 
   return (
     <div className="relative flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden">
+      <CommandPalette />
+      <ThemePicker />
       {/*<DraggableTopBar />*/}
       <RootLayout className="flex-1 flex overflow-hidden">
         <ActivityBar />
         
-        {mode !== 'council' && (
+        {mode !== 'council' && notesSidebarOpen && (
           <Sidebar className="p-2 border-r border-border bg-card/30">
             <ActionButtonsRow className="flex justify-between mt-1" />
             <NotePreviewList className="mt-3 space-y-1" onSelect={resetScroll} />

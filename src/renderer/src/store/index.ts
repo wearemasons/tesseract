@@ -108,6 +108,20 @@ export const createEmptyNoteAtom = atom(null, async (get, set) => {
   set(selectedNoteIndexAtom, 0)
 })
 
+export const notesSidebarOpenAtom = atom<boolean>(true)
+
+export const autocompleteEnabledAtom = atom<boolean>(true)
+
+export const pendingWriteContentAtom = atom<string | null>(null)
+
+export const commandPaletteOpenAtom = atom<boolean>(false)
+
+export const fontSizeAtom = atom<number>(18)
+
+export const activeThemeCssAtom = atom<string | null>(null)
+
+export const themePickerOpenAtom = atom<boolean>(false)
+
 export const deleteNoteAtom = atom(null, async (get, set) => {
   const notes = get(notesAtom)
   const selectedNote = get(selectedNoteAtom)

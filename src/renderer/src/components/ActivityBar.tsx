@@ -1,16 +1,30 @@
-import { useAtom } from 'jotai'
-import { appModeAtom, AppMode } from '@renderer/store'
+import { useAtom, useSetAtom } from 'jotai'
+import { appModeAtom, AppMode, notesSidebarOpenAtom } from '@renderer/store'
 import { LuFiles, LuBot, LuUsers } from 'react-icons/lu'
 import { cn } from '@renderer/utils'
 import { ThemeToggle } from './ThemeToggle'
 
 export const ActivityBar = () => {
   const [mode, setMode] = useAtom(appModeAtom)
+  const setNotesSidebar = useSetAtom(notesSidebarOpenAtom)
 
-  const navItems: { mode: AppMode; icon: any; label: string }[] = [
-    { mode: 'notes', icon: LuFiles, label: 'Notes' },
-    { mode: 'ai', icon: LuBot, label: 'AI Companion' },
-    { mode: 'council', icon: LuUsers, label: 'Council of Thought' }
+  const handleNotes = () => {
+    if (mode === 'notes') {
+      setNotesSidebar((prev) => !prev)
+    } else {
+      setMode('notes')
+      setNotesSidebar(true)
+    }
+  }
+
+  const handleAI = () => {
+    setMode((prev) => (prev === 'ai' ? 'notes' : 'ai'))
+  }
+
+  const navItems: { mode: AppMode; icon: any; label: string; onClick: () => void }[] = [
+    { mode: 'notes', icon: LuFiles, label: 'Notes', onClick: handleNotes },
+    { mode: 'ai', icon: LuBot, label: 'AI Companion', onClick: handleAI },
+    { mode: 'council', icon: LuUsers, label: 'Council of Thought', onClick: () => setMode('council') }
   ]
 
   return (
@@ -19,7 +33,7 @@ export const ActivityBar = () => {
         {navItems.map((item) => (
           <button
             key={item.mode}
-            onClick={() => setMode(item.mode)}
+            onClick={item.onClick}
             className={cn(
               'p-2 rounded-lg transition-colors group relative',
               mode === item.mode

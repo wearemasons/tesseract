@@ -2,6 +2,7 @@ appId: com.electron.app
 productName: tesseract
 directories:
   buildResources: build
+icon: resources/icon.png
 files:
   - '!**/.vscode/*'
   - '!src/*'
