@@ -12,6 +12,7 @@ interface CommandInputProps {
 }
 
 const COMMANDS = [
+  { label: '/write', description: 'Write content to the current note' },
   { label: '/debate', description: 'Start a 3-way debate' },
   { label: '/summarize', description: 'Synthesize a conclusion' },
   { label: '/brainstorm', description: 'Generate creative ideas' },

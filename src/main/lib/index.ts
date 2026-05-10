@@ -3,7 +3,7 @@ import fs from 'fs-extra'
 import { homedir } from 'os'
 import path from 'path'
 import { appDirectoryName, fileEncoding, welcomeNoteFilename } from '@shared/constants'
-import { NoteInfo } from '@shared/model'
+import { NoteInfo } from '@shared/models'
 import { getWelcomeNoteAssetPath } from '@main/assets'
 
 export function getRootDir(): string {
@@ -100,4 +100,17 @@ export async function deleteNote(title: NoteInfo['title']): Promise<boolean> {
   const filePath = path.join(getNotesDir(), `${title}.md`)
   await fs.remove(filePath)
   return true
+}
+
+export async function readWorkspaceFile(filePath: string): Promise<string> {
+  try {
+    const absolutePath = path.resolve(process.cwd(), filePath)
+    if (fs.existsSync(absolutePath)) {
+      return await fs.readFile(absolutePath, fileEncoding)
+    }
+    throw new Error(`File not found: ${absolutePath}`)
+  } catch (error) {
+    console.error('Failed to read workspace file:', error)
+    throw error
+  }
 }

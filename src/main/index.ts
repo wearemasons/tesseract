@@ -2,7 +2,8 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
-import { createNote, deleteNote, getNotes, readNote, writeNote } from '@main/lib'
+import { createNote, deleteNote, getNotes, readNote, writeNote, readWorkspaceFile } from '@main/lib'
+import { generateAIResponse, generateAutocomplete } from '@main/lib/ai'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -12,7 +13,7 @@ function createWindow(): void {
     width: 900,
     height: 670,
     minWidth: 800,
-    minHeight: 600,
+    minHeight: 500,
     show: false,
     center: true,
     title: 'Tesseract',
@@ -82,9 +83,18 @@ app.whenReady().then(() => {
   // Note file system IPC handlers
   ipcMain.handle('getNotes', () => getNotes())
   ipcMain.handle('readNote', (_, title: string) => readNote(title))
+  ipcMain.handle('readWorkspaceFile', (_, filePath: string) => readWorkspaceFile(filePath))
   ipcMain.handle('writeNote', (_, title: string, content: string) => writeNote(title, content))
   ipcMain.handle('createNote', () => createNote())
   ipcMain.handle('deleteNote', (_, title: string) => deleteNote(title))
+
+  // AI IPC handlers
+  ipcMain.handle(
+    'ai:generate',
+    (_, prompt: string, history?: any[], context?: string, customSystemPrompt?: string) =>
+      generateAIResponse(prompt, history, context, customSystemPrompt)
+  )
+  ipcMain.handle('ai:autocomplete', (_, textBefore: string) => generateAutocomplete(textBefore))
 
   createWindow()
 

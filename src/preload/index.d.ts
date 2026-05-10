@@ -1,5 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { GetNotes, ReadNote, WriteNote, CreateNote, DeleteNote } from '../shared/types'
+import { GetNotes, ReadNote, WriteNote, CreateNote, DeleteNote, GenerateAIResponse, GenerateAutocomplete, ReadWorkspaceFile } from '../shared/types'
 
 declare global {
   interface Window {
@@ -8,9 +8,12 @@ declare global {
       locale: string
       getNotes: GetNotes
       readNote: ReadNote
+      readWorkspaceFile: ReadWorkspaceFile
       writeNote: WriteNote
       createNote: CreateNote
       deleteNote: DeleteNote
+      generateAIResponse: GenerateAIResponse
+      generateAutocomplete: GenerateAutocomplete
     }
   }
 }

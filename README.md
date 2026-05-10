@@ -1,71 +1,63 @@
 # Tesseract
 
-> A local-first Markdown editor that thinks with you.
+> A local-first, AI-enhanced markdown notebook.
 
-Tesseract starts as a clean, distraction-free note-taking app. Under the hood, it's the foundation for something bigger: an **Integrated Thinking Environment** — a writing space that understands your mood, recalls your history, and actively helps you think, not just store thoughts.
-
----
-
-## What's in the MVP
-
-The current version is a fully functional desktop note editor built with Electron + React. No cloud. No accounts. Your notes live as plain `.md` files on your machine.
-
-**Features:**
-
-- Real-time Markdown rendering via MDX Editor
-- Auto-save with 3s throttle + save-on-blur
-- Sidebar with note list sorted by last edited
-- Create and delete notes via native OS dialogs
-- Welcome note on first launch
-- Frosted glass UI with draggable titlebar
+Tesseract is an Integrated Thinking Environment — a desktop app for writing notes, conversing with AI about them, and convening a council of personas to pressure-test your ideas. No cloud, no accounts. Your notes live as plain `.md` files on your machine.
 
 ---
 
-## Where This Is Going
+## Features
 
-The MVP is just the shell. The full product layers AI on top of it — powered by [OpenRouter](https://openrouter.ai) for model flexibility — turning it into what I'm calling an **ITE: Integrated Thinking Environment**.
+### Notes Mode
+Rich markdown editing via MDX Editor (Lexical-based) with real-time rendering, auto-save (3s throttle + save-on-blur), and a sidebar sorted by last edit time. Create and delete notes via native OS dialogs.
 
-Think of it as Cursor, but for your brain.
-
-### Mood-Aware Interface
-
-A local sentiment analysis engine reads your writing in real-time and detects your current mental state. The AI adapts accordingly:
-
-- **Stressed or venting?** The assistant shifts to a supportive, coaching mode — asks reflective questions, helps you decompress.
-- **Focused and technical?** It becomes concise, logical, and stays out of your way.
-
-### Dynamic Tooling
-
-Intent detection triggers purpose-built tools automatically. Write _"I need to plan my week"_ and instead of a chat bubble, a time-planning agent spins up, generates schedule variations, and writes the result directly into your Markdown file with checkboxes.
-
-### Total Recall (RAG)
-
-The app indexes all your notes and uses RAG to surface relevant context as you write. Planning your week? It'll remind you about the task you didn't finish last Tuesday. Writing about a project? It'll link notes you wrote six months ago.
+### AI Companion
+An AI sidebar powered by [OpenCode Zen](https://opencode.ai/zen) that answers questions about your current note. Type `/write` to have the AI rewrite the full note — it sees the entire document and outputs complete updated markdown.
 
 ### Council of Thought
-
-Sometimes you don't need validation — you need a fight. Highlight any idea and hit **Debate**. Three AI personas go at it:
-
+A multi-perspective debate arena where three AI personas argue your idea:
 - **The Visionary** — argues the upside and potential
 - **The Skeptic** — attacks flaws, risks, and blind spots
 - **The Pragmatist** — focuses on execution and resources
 
-You watch the debate, then make the final call as the Judge.
+### Command Palette
+`Ctrl+K` opens a searchable command palette with controls for font size (inc/dec/reset), toggling dark/light theme, picking color themes, and toggling code autocomplete.
+
+### Color Themes
+`Ctrl+K` → "Pick Theme..." opens a theme picker dialog with multiple color schemes. Each theme overrides the app's CSS custom properties — currently includes Default, Amber Glow, Violet, Valentine, Gothic, Kodama Grave, and Masons.
+
+### Code Autocomplete
+AI-powered inline autocomplete as you type. Toggle with `Alt+A`. Accept suggestions with `Ctrl+Space` or `Tab`. Visual border-flash feedback when toggled.
+
+### Shared Config
+Keyboard shortcuts:
+| Shortcut | Action |
+|---|---|
+| `Ctrl+K` | Open command palette |
+| `Ctrl+B` | Toggle notes sidebar |
+| `Ctrl+Shift+B` | Toggle AI sidebar |
+| `Alt+A` | Toggle code autocomplete |
+| `Ctrl+Space` / `Tab` | Accept autocomplete suggestion |
+
+Window remembers a minimum size of 800×500.
 
 ---
 
 ## Tech Stack
 
-| Layer             | Tech                              |
-| ----------------- | --------------------------------- |
-| Desktop shell     | Electron + electron-vite          |
-| UI                | React + TypeScript + Tailwind CSS |
-| Editor            | MDX Editor                        |
-| State             | Jotai                             |
-| File system       | fs-extra                          |
-| AI (full version) | OpenRouter                        |
+| Layer | Tech |
+|---|---|
+| Desktop shell | Electron + electron-vite |
+| UI | React 19 + TypeScript + Tailwind CSS v4 |
+| Editor | MDX Editor (Lexical) |
+| State | Jotai |
+| File system | fs-extra |
+| AI inference | OpenCode Zen API (`big-pickle` model) |
+| UI components | shadcn/ui (Dialog, Command, Button) |
+| Icons | lucide-react via react-icons/lu |
+| Plugins | Tailwind Typography, tailwindcss-animate |
 
-Notes are stored as `.md` files under `~/Tesseract/` on your machine.
+Notes are stored as `.md` files under `~/Tesseract/Notes/`.
 
 ---
 
@@ -76,13 +68,23 @@ pnpm install
 pnpm dev
 ```
 
+### Environment
+
+Copy `.env.example` to `.env` and set your API key:
+
+```bash
+OPENCODE_ZEN_API_KEY=your_key_here
+```
+
+Get a key at [opencode.ai/zen](https://opencode.ai/zen).
+
 ### Build
 
 ```bash
-pnpm build        # type-check + bundle
-pnpm build:mac    # macOS installer
-pnpm build:win    # Windows installer
-pnpm build:linux  # Linux installer
+pnpm build          # type-check + bundle
+pnpm build:mac      # macOS installer
+pnpm build:win      # Windows installer
+pnpm build:linux    # Linux installer
 ```
 
 ---
@@ -91,22 +93,38 @@ pnpm build:linux  # Linux installer
 
 ```
 src/
-├── main/          # Electron main process (file system, IPC handlers)
-│   └── lib/       # getNotes, readNote, writeNote, createNote, deleteNote
-├── preload/       # Context bridge — exposes safe API to renderer
+├── main/                  # Electron main process
+│   ├── index.ts           # Window creation, IPC handlers
+│   ├── assets.ts          # Asset path resolution
+│   └── lib/
+│       ├── index.ts       # File system operations (CRUD notes)
+│       └── ai.ts          # Zen API inference (chat, autocomplete)
+├── preload/               # Context bridge — exposes safe API to renderer
 ├── renderer/
 │   └── src/
-│       ├── components/   # UI components
-│       ├── hooks/        # useNotesList, useMarkdownEditor
-│       ├── store/        # Jotai atoms
-│       └── utils/        # cn helper, date formatter
-└── shared/        # Types, models, constants shared across all processes
+│       ├── assets/
+│       │   ├── main.css   # Tailwind v4 imports + theme CSS variables
+│       │   ├── base.css   # Base styles, autocomplete animation
+│       │   └── themes/    # Color theme CSS files + index.ts
+│       ├── components/
+│       │   ├── ui/        # shadcn/ui primitives (button, dialog, command)
+│       │   ├── MarkdownEditor/  # Autocomplete plugin, node, MDX plugin
+│       │   ├── AICompanion.tsx  # AI chat sidebar
+│       │   ├── CouncilArena.tsx # Multi-persona debate view
+│       │   ├── CommandPalette.tsx  # Ctrl+K command palette
+│       │   ├── ThemePicker.tsx     # Color theme picker dialog
+│       │   ├── ActivityBar.tsx     # Mode switcher (Notes/AI/Council)
+│       │   └── ...
+│       ├── hooks/         # useNotesList, useMarkdownEditor
+│       ├── store/         # Jotai atoms (theme, mode, notes, AI, etc.)
+│       └── utils/         # cn helper, date formatter, AI utilities
+├── shared/                # Types, models, constants shared across processes
+└── resources/
+    └── welcome.md         # First-launch welcome note
 ```
 
 ---
 
-## Status
+## License
 
-This is a graduation project MVP. The note editor is feature-complete. AI integration is next.
-
-Built by [Seif Zakaria](https://www.seifzellaban.wiki), Omar Adel, Beshoy Mahrous, Boles Sa'ad — Masons
+Built by [Seif Zakaria](https://seifzellaban.wiki), Omar Adel, Beshoy Mahrous, Boles Sa'ad — [Masons](https://wearemasons.com)

@@ -2,6 +2,7 @@ appId: com.electron.app
 productName: tesseract
 directories:
   buildResources: build
+icon: resources/icon.png
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -31,8 +32,6 @@ dmg:
 linux:
   target:
     - AppImage
-    - snap
-    - deb
   maintainer: electronjs.org
   category: Utility
 appImage:

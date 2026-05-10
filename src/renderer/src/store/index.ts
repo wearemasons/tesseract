@@ -9,6 +9,27 @@ export const appModeAtom = atom<AppMode>('notes')
 export type Theme = 'light' | 'dark' | 'system'
 export const themeAtom = atomWithStorage<Theme>('theme', 'dark')
 
+export type AppMode = 'notes' | 'ai' | 'council'
+export const appModeAtom = atom<AppMode>('notes')
+
+export type Theme = 'light' | 'dark' | 'system'
+export const themeAtom = atom<Theme>('dark')
+
+export interface AIMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+export const aiMessagesAtom = atom<AIMessage[]>([])
+
+export type CouncilPersona = 'visionary' | 'skeptic' | 'pragmatist' | 'synthesizer' | 'user'
+export interface CouncilMessage {
+  id: string
+  persona: CouncilPersona
+  content: string
+  timestamp: number
+}
+export const councilMessagesAtom = atom<CouncilMessage[]>([])
+
 // --- Async atom to load notes from file system ---
 const loadNotes = async (): Promise<NoteInfo[]> => {
   const notes = await window.context.getNotes()
@@ -93,6 +114,20 @@ export const createEmptyNoteAtom = atom(null, async (get, set) => {
   }
   set(selectedNoteIndexAtom, 0)
 })
+
+export const notesSidebarOpenAtom = atom<boolean>(true)
+
+export const autocompleteEnabledAtom = atom<boolean>(true)
+
+export const pendingWriteContentAtom = atom<string | null>(null)
+
+export const commandPaletteOpenAtom = atom<boolean>(false)
+
+export const fontSizeAtom = atom<number>(18)
+
+export const activeThemeCssAtom = atom<string | null>(null)
+
+export const themePickerOpenAtom = atom<boolean>(false)
 
 export const deleteNoteAtom = atom(null, async (get, set) => {
   const notes = get(notesAtom)
