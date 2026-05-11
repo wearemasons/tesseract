@@ -4,7 +4,8 @@ import {
   themeAtom,
   fontSizeAtom,
   autocompleteEnabledAtom,
-  themePickerOpenAtom
+  themePickerOpenAtom,
+  sessionPickerOpenAtom
 } from '@renderer/store'
 import {
   CommandDialog,
@@ -14,7 +15,7 @@ import {
   CommandItem,
   CommandList
 } from './ui/command'
-import { LuMoon, LuPlus, LuMinus, LuRotateCcw, LuSparkles, LuPalette } from 'react-icons/lu'
+import { LuMoon, LuPlus, LuMinus, LuRotateCcw, LuSparkles, LuPalette, LuHistory } from 'react-icons/lu'
 
 export const CommandPalette = () => {
   const [open, setOpen] = useAtom(commandPaletteOpenAtom)
@@ -22,6 +23,7 @@ export const CommandPalette = () => {
   const [fontSize, setFontSize] = useAtom(fontSizeAtom)
   const [autocompleteEnabled, setAutocompleteEnabled] = useAtom(autocompleteEnabledAtom)
   const setThemePickerOpen = useSetAtom(themePickerOpenAtom)
+  const setSessionPickerOpen = useSetAtom(sessionPickerOpenAtom)
 
   const run = (fn: () => void) => {
     fn()
@@ -70,6 +72,18 @@ export const CommandPalette = () => {
           >
             <LuPalette className="mr-2" />
             <span>Pick Theme...</span>
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandGroup heading="History">
+          <CommandItem
+            onSelect={() => {
+              setOpen(false)
+              setSessionPickerOpen(true)
+            }}
+          >
+            <LuHistory className="mr-2" />
+            <span>Load Session...</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

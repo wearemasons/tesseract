@@ -8,6 +8,8 @@ interface ResizableSidebarProps {
   minWidth?: number
   maxWidth?: number
   className?: string
+  width?: number
+  onWidthChange?: (width: number) => void
 }
 
 export const ResizableSidebar = ({
@@ -16,10 +18,14 @@ export const ResizableSidebar = ({
   defaultWidth = 300,
   minWidth = 200,
   maxWidth = 600,
-  className
+  className,
+  width: controlledWidth,
+  onWidthChange
 }: ResizableSidebarProps) => {
-  const [width, setWidth] = useState(defaultWidth)
+  const [internalWidth, setInternalWidth] = useState(controlledWidth ?? defaultWidth)
   const isResizing = useRef(false)
+
+  const width = controlledWidth ?? internalWidth
 
   const startResizing = useCallback(() => {
     isResizing.current = true
@@ -45,10 +51,14 @@ export const ResizableSidebar = ({
       }
 
       if (newWidth >= minWidth && newWidth <= maxWidth) {
-        setWidth(newWidth)
+        if (onWidthChange) {
+          onWidthChange(newWidth)
+        } else {
+          setInternalWidth(newWidth)
+        }
       }
     },
-    [side, minWidth, maxWidth]
+    [side, minWidth, maxWidth, onWidthChange]
   )
 
   useEffect(() => {

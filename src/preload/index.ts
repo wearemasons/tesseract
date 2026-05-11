@@ -8,7 +8,8 @@ import {
   DeleteNote,
   GenerateAIResponse,
   GenerateAutocomplete,
-  ReadWorkspaceFile
+  ReadWorkspaceFile,
+  SessionApi
 } from '../shared/types'
 
 if (!process.contextIsolated) {
@@ -29,7 +30,24 @@ try {
     generateAIResponse: ((...args) =>
       ipcRenderer.invoke('ai:generate', ...args)) as GenerateAIResponse,
     generateAutocomplete: ((...args) =>
-      ipcRenderer.invoke('ai:autocomplete', ...args)) as GenerateAutocomplete
+      ipcRenderer.invoke('ai:autocomplete', ...args)) as GenerateAutocomplete,
+    session: {
+      getActiveId: () => ipcRenderer.invoke('session:getActiveId'),
+      create: () => ipcRenderer.invoke('session:create'),
+      update: (data) => ipcRenderer.invoke('session:update', data),
+      list: () => ipcRenderer.invoke('session:list'),
+      get: (id) => ipcRenderer.invoke('session:get', id),
+      getAiMessages: (sessionId) => ipcRenderer.invoke('session:getAiMessages', sessionId),
+      getCouncilMessages: (sessionId) =>
+        ipcRenderer.invoke('session:getCouncilMessages', sessionId),
+      saveAiMessage: (sessionId, role, content) =>
+        ipcRenderer.invoke('session:saveAiMessage', sessionId, role, content),
+      saveCouncilMessage: (sessionId, persona, content) =>
+        ipcRenderer.invoke('session:saveCouncilMessage', sessionId, persona, content),
+      delete: (id) => ipcRenderer.invoke('session:delete', id),
+      loadLatest: () => ipcRenderer.invoke('session:loadLatest'),
+      load: (id) => ipcRenderer.invoke('session:load', id)
+    } satisfies SessionApi
   })
 } catch (error) {
   console.error(error)

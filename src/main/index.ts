@@ -4,14 +4,68 @@ import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { createNote, deleteNote, getNotes, readNote, writeNote, readWorkspaceFile } from '@main/lib'
 import { generateAIResponse, generateAutocomplete } from '@main/lib/ai'
+import {
+  createSession,
+  updateSession,
+  getLatestSession,
+  listSessions,
+  getSession,
+  getAiMessages,
+  getCouncilMessages,
+  saveAiMessage,
+  saveCouncilMessage,
+  deleteSession,
+  getWindowState,
+  setWindowState,
+  setMeta,
+  closeDb
+} from '@main/lib/session'
 
 let mainWindow: BrowserWindow | null = null
+let activeSessionId: number | null = null
+let boundsSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+const debouncedSaveBounds = (): void => {
+  if (boundsSaveTimer) clearTimeout(boundsSaveTimer)
+  boundsSaveTimer = setTimeout(() => {
+    if (!mainWindow) return
+    const bounds = mainWindow.getBounds()
+    const maximized = mainWindow.isMaximized()
+    setWindowState({
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+      maximized
+    })
+  }, 500)
+}
+
+const startNewSession = (): void => {
+  activeSessionId = createSession()
+  setMeta('active_session_id', String(activeSessionId))
+}
+
+const saveCurrentSessionState = (): void => {
+  if (!activeSessionId) return
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  const bounds = mainWindow.getBounds()
+  const maximized = mainWindow.isMaximized()
+  setWindowState({
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    maximized
+  })
+}
 
 function createWindow(): void {
-  // Create the browser window.
-  mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+  const savedState = getWindowState()
+
+  const windowOptions: Electron.BrowserWindowConstructorOptions = {
+    width: savedState?.width ?? 900,
+    height: savedState?.height ?? 670,
     minWidth: 800,
     minHeight: 500,
     show: false,
@@ -32,19 +86,34 @@ function createWindow(): void {
       sandbox: true,
       contextIsolation: true
     }
-  })
+  }
+
+  if (savedState && !savedState.maximized && savedState.x != null && savedState.y != null) {
+    windowOptions.x = savedState.x
+    windowOptions.y = savedState.y
+  }
+
+  mainWindow = new BrowserWindow(windowOptions)
+
+  if (savedState?.maximized) {
+    mainWindow.maximize()
+  }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow!.show()
   })
+
+  mainWindow.on('resize', debouncedSaveBounds)
+  mainWindow.on('move', debouncedSaveBounds)
+  mainWindow.on('maximize', debouncedSaveBounds)
+  mainWindow.on('unmaximize', debouncedSaveBounds)
+  mainWindow.on('close', saveCurrentSessionState)
 
   mainWindow!.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -52,24 +121,15 @@ function createWindow(): void {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
   ipcMain.on('ping', () => console.info('pong'))
 
-  // Window control IPC handlers
   ipcMain.on('window-minimize', () => mainWindow?.minimize())
   ipcMain.on('window-maximize', () => {
     if (mainWindow?.isMaximized()) {
@@ -80,7 +140,6 @@ app.whenReady().then(() => {
   })
   ipcMain.on('window-close', () => mainWindow?.close())
 
-  // Note file system IPC handlers
   ipcMain.handle('getNotes', () => getNotes())
   ipcMain.handle('readNote', (_, title: string) => readNote(title))
   ipcMain.handle('readWorkspaceFile', (_, filePath: string) => readWorkspaceFile(filePath))
@@ -88,7 +147,6 @@ app.whenReady().then(() => {
   ipcMain.handle('createNote', () => createNote())
   ipcMain.handle('deleteNote', (_, title: string) => deleteNote(title))
 
-  // AI IPC handlers
   ipcMain.handle(
     'ai:generate',
     (_, prompt: string, history?: unknown[], context?: string, customSystemPrompt?: string) =>
@@ -96,23 +154,83 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('ai:autocomplete', (_, textBefore: string) => generateAutocomplete(textBefore))
 
+  // Session IPC handlers
+  ipcMain.handle('session:getActiveId', () => activeSessionId)
+  ipcMain.handle('session:create', () => {
+    startNewSession()
+    return activeSessionId
+  })
+  ipcMain.handle('session:update', (_, data: Record<string, unknown>) => {
+    if (activeSessionId) updateSession(activeSessionId, data)
+  })
+  ipcMain.handle('session:list', () => listSessions())
+  ipcMain.handle('session:get', (_, id: number) => getSession(id))
+  ipcMain.handle('session:getAiMessages', (_, sessionId: number) => getAiMessages(sessionId))
+  ipcMain.handle('session:getCouncilMessages', (_, sessionId: number) =>
+    getCouncilMessages(sessionId)
+  )
+  ipcMain.handle('session:saveAiMessage', (_, sessionId: number, role: string, content: string) => {
+    saveAiMessage(sessionId, role, content)
+  })
+  ipcMain.handle(
+    'session:saveCouncilMessage',
+    (_, sessionId: number, persona: string, content: string) => {
+      saveCouncilMessage(sessionId, persona, content)
+    }
+  )
+  ipcMain.handle('session:delete', (_, id: number) => deleteSession(id))
+  ipcMain.handle('session:loadLatest', () => {
+    if (activeSessionId) {
+      const session = getSession(activeSessionId)
+      if (session) {
+        return {
+          session,
+          aiMessages: getAiMessages(activeSessionId),
+          councilMessages: getCouncilMessages(activeSessionId)
+        }
+      }
+    }
+    return null
+  })
+  ipcMain.handle('session:load', (_, id: number) => {
+    const session = getSession(id)
+    if (session) {
+      activeSessionId = session.id
+      setMeta('active_session_id', String(session.id))
+      return {
+        session,
+        aiMessages: getAiMessages(session.id),
+        councilMessages: getCouncilMessages(session.id)
+      }
+    }
+    return null
+  })
+
+  // Restore latest session before window loads
+  const latest = getLatestSession()
+  if (latest) {
+    activeSessionId = latest.id
+    setMeta('active_session_id', String(latest.id))
+  }
+
   createWindow()
 
+  // Only create a new session if no session was restored
+  if (!activeSessionId) {
+    startNewSession()
+  }
+
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+app.on('will-quit', () => {
+  closeDb()
+})

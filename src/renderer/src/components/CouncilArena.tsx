@@ -5,6 +5,7 @@ import {
   CouncilPersona,
   CouncilMessage
 } from '@renderer/store'
+import { persistCouncilMessage } from '@renderer/store/sessionStorage'
 import { cn } from '@renderer/utils'
 import { useState, useRef, useEffect } from 'react'
 import { CommandInput } from './CommandInput'
@@ -109,6 +110,7 @@ export const CouncilArena = () => {
     }
     setMessages((prev) => [...prev, newMsg])
     messagesRef.current = [...messagesRef.current, newMsg]
+    persistCouncilMessage(persona, content)
     return newMsg
   }
 

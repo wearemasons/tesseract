@@ -11,18 +11,24 @@ import {
   RootLayout,
   Sidebar,
   CommandPalette,
-  ThemePicker
+  ThemePicker,
+  SessionPicker
 } from './components'
 import { ActionButtonsRow } from './components/ActionButtonRow'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom, useAtom } from 'jotai'
 import {
   appModeAtom,
   commandPaletteOpenAtom,
   activeThemeCssAtom,
-  notesSidebarOpenAtom
+  notesSidebarOpenAtom,
+  aiSidebarWidthAtom
 } from './store'
+import { useSessionManager, useSessionSaver } from './store/sessionStorage'
 
 function App(): JSX.Element {
+  useSessionManager()
+  useSessionSaver()
+
   const contentContainerRef = useRef<HTMLDivElement>(null)
   const mode = useAtomValue(appModeAtom)
   const notesSidebarOpen = useAtomValue(notesSidebarOpenAtom)
@@ -30,6 +36,7 @@ function App(): JSX.Element {
   const setNotesSidebar = useSetAtom(notesSidebarOpenAtom)
   const setMode = useSetAtom(appModeAtom)
   const activeThemeCss = useAtomValue(activeThemeCssAtom)
+  const [aiSidebarWidth, setAiSidebarWidth] = useAtom(aiSidebarWidthAtom)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -83,6 +90,7 @@ function App(): JSX.Element {
     <div className="relative flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden">
       <CommandPalette />
       <ThemePicker />
+      <SessionPicker />
       {/*<DraggableTopBar />*/}
       <RootLayout className="flex-1 flex overflow-hidden">
         <ActivityBar />
@@ -131,7 +139,14 @@ function App(): JSX.Element {
               </div>
 
               {mode === 'ai' && (
-                <ResizableSidebar side="right" defaultWidth={350} minWidth={250} maxWidth={500}>
+                <ResizableSidebar
+                  side="right"
+                  defaultWidth={350}
+                  minWidth={250}
+                  maxWidth={800}
+                  width={aiSidebarWidth}
+                  onWidthChange={setAiSidebarWidth}
+                >
                   <AICompanion />
                 </ResizableSidebar>
               )}

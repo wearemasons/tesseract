@@ -3,6 +3,8 @@ import { atom } from 'jotai'
 import { unwrap } from 'jotai/utils'
 import { atomWithStorage } from 'jotai/utils'
 
+export const sessionReadyAtom = atom<boolean>(false)
+
 export type AppMode = 'notes' | 'ai' | 'council'
 export const appModeAtom = atom<AppMode>('notes')
 
@@ -122,6 +124,10 @@ export const fontSizeAtom = atom<number>(18)
 export const activeThemeCssAtom = atom<string | null>(null)
 
 export const themePickerOpenAtom = atom<boolean>(false)
+
+export const sessionPickerOpenAtom = atom<boolean>(false)
+
+export const aiSidebarWidthAtom = atom<number>(350)
 
 export const deleteNoteAtom = atom(null, async (get, set) => {
   const notes = get(notesAtom)

@@ -5,6 +5,7 @@ import {
   saveNoteAtom,
   pendingWriteContentAtom
 } from '@renderer/store'
+import { persistAiMessage } from '@renderer/store/sessionStorage'
 import { cn } from '@renderer/utils'
 import { useState, useRef, useEffect } from 'react'
 import { LuBrain, LuLoader, LuFilePen } from 'react-icons/lu'
@@ -45,6 +46,7 @@ export const AICompanion = () => {
     const { cleanText, context: refContext } = await resolveNoteReferences(text)
 
     setMessages((prev) => [...prev, { role: 'user', content: text }])
+    persistAiMessage('user', text)
 
     try {
       let fullContext = ''
@@ -74,24 +76,26 @@ export const AICompanion = () => {
           setWriteConfirm(selectedNote.title)
           setTimeout(() => setWriteConfirm(null), 3000)
         }
+        const displayContent = response
+          ? `✏️ **Written to "${selectedNote?.title || 'note'}"**\n\n${response}`
+          : 'Sorry, I could not generate content. Please check your API key.'
         setMessages((prev) => [
           ...prev,
-          {
-            role: 'assistant',
-            content: response
-              ? `✏️ **Written to "${selectedNote?.title || 'note'}"**\n\n${response}`
-              : 'Sorry, I could not generate content. Please check your API key.'
-          }
+          { role: 'assistant', content: displayContent }
         ])
+        persistAiMessage('assistant', response || 'Sorry, I could not generate content. Please check your API key.')
       } else {
         const response = await window.context.generateAIResponse(cleanText, history, fullContext)
         setMessages((prev) => [...prev, { role: 'assistant', content: response }])
+        persistAiMessage('assistant', response)
       }
     } catch {
+      const errorContent = 'Sorry, I encountered an error. Please check your API key.'
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, I encountered an error. Please check your API key.' }
+        { role: 'assistant', content: errorContent }
       ])
+      persistAiMessage('assistant', errorContent)
     } finally {
       setIsLoading(false)
     }

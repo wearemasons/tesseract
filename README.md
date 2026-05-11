@@ -51,13 +51,13 @@ Window remembers a minimum size of 800×500.
 | UI | React 19 + TypeScript + Tailwind CSS v4 |
 | Editor | MDX Editor (Lexical) |
 | State | Jotai |
-| File system | fs-extra |
+| Persistence | better-sqlite3 + fs-extra |
 | AI inference | OpenCode Zen API (`big-pickle` model) |
 | UI components | shadcn/ui (Dialog, Command, Button) |
 | Icons | lucide-react via react-icons/lu |
 | Plugins | Tailwind Typography, tailwindcss-animate |
 
-Notes are stored as `.md` files under `~/Tesseract/Notes/`.
+Notes are stored as `.md` files under `~/Tesseract/Notes/`. Sessions and messages in SQLite at `~/Tesseract/tesseract.db`.
 
 ---
 
@@ -89,6 +89,103 @@ pnpm build:linux    # Linux installer
 
 ---
 
+## Architecture
+
+### Process Model
+
+```
+┌─────────────────────────────────────────────────┐
+│ Main Process  (src/main/)                       │
+│  ┌──────────────┐  ┌─────────────────────────┐  │
+│  │ index.ts      │  │ lib/session.ts          │  │
+│  │  · Window mgmt│  │  · SQLite (better-sql.)│  │
+│  │  · IPC router │  │  · Schema migrations   │  │
+│  │  · State save │  │  · CRUD: sessions, msgs│  │
+│  └──────┬───────┘  └─────────────────────────┘  │
+│         │                                        │
+│    ipcMain.handle / ipcMain.on                   │
+│         │                                        │
+├─────────┼───────────────────────────────────────┤
+│         │                                        │
+│  Preload (src/preload/)                          │
+│  ┌──────────────────────────────────────────┐    │
+│  │ contextBridge.exposeInMainWorld('context') │   │
+│  │  · Notes API  · AI API  · Session API     │   │
+│  └──────────────────┬───────────────────────┘    │
+│                     │                             │
+├─────────────────────┼───────────────────────────┤
+│                     │                             │
+│ Renderer (src/renderer/)                          │
+│  ┌──────────────────────────────────────────┐    │
+│  │ React + Jotai                             │    │
+│  │  · App.tsx — layout, keyboard shortcuts   │    │
+│  │  · store/ — atoms (mode, messages, theme) │    │
+│  │  · store/sessionStorage.ts — persistence  │    │
+│  │  · components/ — UI                       │    │
+│  │     ResizableSidebar — draggable panels   │    │
+│  │     AICompanion — AI chat                 │    │
+│  │     CouncilArena — multi-persona debate   │    │
+│  │     SessionPicker — historical sessions   │    │
+│  │     CommandPalette — Ctrl+K palette       │    │
+│  └──────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────┘
+```
+
+#### Main Process
+
+Window creation, lifecycle, and IPC routing. All system calls — file I/O, AI inference, database queries — live here under strict `contextIsolation`. The process registers ~20 `ipcMain.handle` channels split into three domains: **notes** (CRUD on `.md` files), **AI** (generate + autocomplete), and **session** (SQLite persistence).
+
+#### Preload
+
+A thin context bridge (`contextBridge.exposeInMainWorld`) that exposes typed APIs to the sandboxed renderer. The `SessionApi` surface includes `loadLatest`, `saveAiMessage`, `update`, `list`, `delete`, and session picker methods. Every call passes through `ipcRenderer.invoke`.
+
+#### Renderer
+
+React 19 with Jotai for state. Atoms fall into three tiers:
+- **Ephemeral** — `commandPaletteOpenAtom`, `selectedNoteIndexAtom` (reset on reload)
+- **localStorage-persisted** — `themeAtom` (via `atomWithStorage`)
+- **SQLite-persisted** — `appModeAtom`, `fontSizeAtom`, `aiMessagesAtom`, `councilMessagesAtom`, `aiSidebarWidthAtom` (synced via `sessionStorage.ts`)
+
+### Session Persistence
+
+```
+User opens app
+  │
+  ├─ Main process restores latest session from SQLite
+  │  (sets activeSessionId before window loads)
+  │
+  ├─ Renderer mounts → useSessionManager()
+  │   └─ Calls loadLatest() → gets session + messages from IPC
+  │   └─ Hydrates atoms (mode, fontSize, messages, sidebarWidth, …)
+  │
+  ├─ User interacts
+  │   ├─ UI state → debounced session.update() → SQLite
+  │   ├─ AI message → persistAiMessage() → SQLite
+  │   └─ Council message → persistCouncilMessage() → SQLite
+  │
+  └─ Window closes
+      └─ Window bounds saved to meta table
+```
+
+SQLite schema (`~/Tesseract/tesseract.db`):
+- `sessions` — per-session UI state (mode, font size, theme, sidebar width, …)
+- `ai_messages` — AI chat history (role, content, timestamp, FK → sessions)
+- `council_messages` — Council debate log (persona, content, timestamp, FK → sessions)
+- `meta` — key-value store (window bounds, active session id)
+- `schema_version` — migration tracking
+
+### Data Flow
+
+| Data | Storage | Access |
+|---|---|---|
+| Notes | `~/Tesseract/Notes/*.md` | Main process `fs-extra`, IPC to renderer |
+| Session state | SQLite `sessions` table | IPC → sessionStorage.ts → Jotai atoms |
+| AI messages | SQLite `ai_messages` table | Per-append persist, bulk load on session restore |
+| Council messages | SQLite `council_messages` table | Per-append persist, bulk load on session restore |
+| Window bounds | SQLite `meta` table (key=`window_state`) | On close + debounced on resize/move |
+| Theme preference | localStorage | `atomWithStorage('theme')` |
+| AI response | Transient (not stored) | Generated on demand via Zen API |
+
 ## Project Structure
 
 ```
@@ -98,7 +195,8 @@ src/
 │   ├── assets.ts          # Asset path resolution
 │   └── lib/
 │       ├── index.ts       # File system operations (CRUD notes)
-│       └── ai.ts          # Zen API inference (chat, autocomplete)
+│       ├── ai.ts          # Zen API inference (chat, autocomplete)
+│       └── session.ts     # SQLite session persistence (better-sqlite3)
 ├── preload/               # Context bridge — exposes safe API to renderer
 ├── renderer/
 │   └── src/
@@ -113,10 +211,13 @@ src/
 │       │   ├── CouncilArena.tsx # Multi-persona debate view
 │       │   ├── CommandPalette.tsx  # Ctrl+K command palette
 │       │   ├── ThemePicker.tsx     # Color theme picker dialog
+│       │   ├── SessionPicker.tsx   # Historical session loader
+│       │   ├── ResizableSidebar.tsx # Draggable resizable panel
 │       │   ├── ActivityBar.tsx     # Mode switcher (Notes/AI/Council)
 │       │   └── ...
 │       ├── hooks/         # useNotesList, useMarkdownEditor
 │       ├── store/         # Jotai atoms (theme, mode, notes, AI, etc.)
+│       │   └── sessionStorage.ts # Atom ↔ SQLite sync (save/restore)
 │       └── utils/         # cn helper, date formatter, AI utilities
 ├── shared/                # Types, models, constants shared across processes
 └── resources/
