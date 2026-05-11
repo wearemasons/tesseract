@@ -13,6 +13,7 @@ import { CommandInput } from './CommandInput'
 import { resolveNoteReferences } from '@renderer/utils/ai'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Shimmer } from './ai/shimmer'
 
 const WRITE_SYSTEM_PROMPT = `You are editing a markdown note. The user wants you to modify it.
 You will receive the current note content and a user request.
@@ -79,22 +80,22 @@ export const AICompanion = () => {
         const displayContent = response
           ? `✏️ **Written to "${selectedNote?.title || 'note'}"**\n\n${response}`
           : 'Sorry, I could not generate content. Please check your API key.'
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: displayContent }
-        ])
-        persistAiMessage('assistant', response || 'Sorry, I could not generate content. Please check your API key.')
+        setMessages((prev) => [...prev, { role: 'assistant', content: displayContent }])
+        persistAiMessage(
+          'assistant',
+          response || 'Sorry, I could not generate content. Please check your API key.'
+        )
       } else {
         const response = await window.context.generateAIResponse(cleanText, history, fullContext)
         setMessages((prev) => [...prev, { role: 'assistant', content: response }])
         persistAiMessage('assistant', response)
       }
-    } catch {
-      const errorContent = 'Sorry, I encountered an error. Please check your API key.'
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: errorContent }
-      ])
+    } catch (error) {
+      const errorContent =
+        error instanceof Error
+          ? `Error: ${error.message}`
+          : 'Sorry, I encountered an error. Please check your API key.'
+      setMessages((prev) => [...prev, { role: 'assistant', content: errorContent }])
       persistAiMessage('assistant', errorContent)
     } finally {
       setIsLoading(false)
@@ -129,8 +130,9 @@ export const AICompanion = () => {
               </div>
             )}
             <div className="p-3 rounded-lg bg-accent/50 text-sm leading-relaxed italic text-muted-foreground">
-              Hello! I'm your integrated thinking assistant. I can see the note you're working on.
-              Ask me to refine your ideas, summarize, or type @ to reference another note.
+              Hello! I&apos;m your integrated thinking assistant. I can see the note you&apos;re
+              working on. Ask me to refine your ideas, summarize, or type @ to reference another
+              note.
             </div>
           </div>
         )}
@@ -152,6 +154,11 @@ export const AICompanion = () => {
             )}
           </div>
         ))}
+        {isLoading && (
+          <div className="p-3 rounded-2xl text-sm leading-relaxed max-w-[90%] bg-muted text-foreground mr-auto rounded-tl-none border border-border/50">
+            <Shimmer>Thinking...</Shimmer>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
@@ -163,7 +170,7 @@ export const AICompanion = () => {
           showCommands={true}
         />
         <p className="text-[10px] text-center text-muted-foreground mt-2 opacity-50">
-          Powered by Gemma 4 31B Instruct Tuned
+          Powered by Big Pickle via OpenCode Zen
         </p>
       </div>
     </div>

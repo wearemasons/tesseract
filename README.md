@@ -97,37 +97,37 @@ pnpm build:linux    # Linux installer
 ┌─────────────────────────────────────────────────┐
 │ Main Process  (src/main/)                       │
 │  ┌──────────────┐  ┌─────────────────────────┐  │
-│  │ index.ts      │  │ lib/session.ts          │  │
-│  │  · Window mgmt│  │  · SQLite (better-sql.)│  │
-│  │  · IPC router │  │  · Schema migrations   │  │
-│  │  · State save │  │  · CRUD: sessions, msgs│  │
+│  │ index.ts     │  │ lib/session.ts          │  │
+│  │ · Window mgmt│  │ · SQLite (better-sql.)  │  │
+│  │ · IPC router │  │ · Schema migrations     │  │
+│  │ · State sav  │  │ · CRUD: sessions, msgs  │  │
 │  └──────┬───────┘  └─────────────────────────┘  │
-│         │                                        │
-│    ipcMain.handle / ipcMain.on                   │
-│         │                                        │
+│         │                                       │
+│    ipcMain.handle / ipcMain.on                  │
+│         │                                       │
 ├─────────┼───────────────────────────────────────┤
-│         │                                        │
-│  Preload (src/preload/)                          │
-│  ┌──────────────────────────────────────────┐    │
-│  │ contextBridge.exposeInMainWorld('context') │   │
-│  │  · Notes API  · AI API  · Session API     │   │
-│  └──────────────────┬───────────────────────┘    │
-│                     │                             │
+│         │                                       │
+│  Preload (src/preload/)                         │
+│  ┌──────────────────────────────────────────┐   │
+│  │contextBridge.exposeInMainWorld('context')│   │
+│  │  · Notes API  · AI API  · Session API    │   │
+│  └──────────────────┬───────────────────────┘   │
+│                     │                           │
 ├─────────────────────┼───────────────────────────┤
-│                     │                             │
-│ Renderer (src/renderer/)                          │
-│  ┌──────────────────────────────────────────┐    │
-│  │ React + Jotai                             │    │
-│  │  · App.tsx — layout, keyboard shortcuts   │    │
-│  │  · store/ — atoms (mode, messages, theme) │    │
-│  │  · store/sessionStorage.ts — persistence  │    │
-│  │  · components/ — UI                       │    │
-│  │     ResizableSidebar — draggable panels   │    │
-│  │     AICompanion — AI chat                 │    │
-│  │     CouncilArena — multi-persona debate   │    │
-│  │     SessionPicker — historical sessions   │    │
-│  │     CommandPalette — Ctrl+K palette       │    │
-│  └──────────────────────────────────────────┘    │
+│                     │                           │
+│ Renderer (src/renderer/)                        │
+│  ┌──────────────────────────────────────────┐   │
+│  │ React + Jotai                            │   │
+│  │  · App.tsx — layout, keyboard shortcuts  │   │
+│  │  · store/ — atoms (mode, messages, theme)│   │
+│  │  · store/sessionStorage.ts — persistence │   │
+│  │  · components/ — UI                      │   │
+│  │     ResizableSidebar — draggable panels  │   │
+│  │     AICompanion — AI chat                │   │
+│  │     CouncilArena — multi-persona debate  │   │
+│  │     SessionPicker — historical sessions  │   │
+│  │     CommandPalette — Ctrl+K palette      │   │
+│  └──────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────┘
 ```
 

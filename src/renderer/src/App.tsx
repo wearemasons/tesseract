@@ -12,7 +12,8 @@ import {
   Sidebar,
   CommandPalette,
   ThemePicker,
-  SessionPicker
+  SessionPicker,
+  AboutDialog
 } from './components'
 import { ActionButtonsRow } from './components/ActionButtonRow'
 import { useAtomValue, useSetAtom, useAtom } from 'jotai'
@@ -88,9 +89,10 @@ function App(): JSX.Element {
 
   return (
     <div className="relative flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden">
+      <SessionPicker />
       <CommandPalette />
       <ThemePicker />
-      <SessionPicker />
+      <AboutDialog />
       {/*<DraggableTopBar />*/}
       <RootLayout className="flex-1 flex overflow-hidden">
         <ActivityBar />

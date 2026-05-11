@@ -12,7 +12,6 @@ import {
   councilMessagesAtom,
   sessionReadyAtom,
   aiSidebarWidthAtom,
-  AIMessage,
   CouncilMessage
 } from './index'
 import { notesAtom } from './index'
@@ -37,8 +36,8 @@ export const useSessionManager = (): void => {
   const setAiSidebarWidth = useSetAtom(aiSidebarWidthAtom)
   const [selectedIndex, setSelectedIndex] = useAtom(selectedNoteIndexAtom)
   const notes = useAtomValue(notesAtom)
-  const [aiMessages, setAiMessages] = useAtom(aiMessagesAtom)
-  const [councilMessages, setCouncilMessages] = useAtom(councilMessagesAtom)
+  const [, setAiMessages] = useAtom(aiMessagesAtom)
+  const [, setCouncilMessages] = useAtom(councilMessagesAtom)
   const loadedRef = useRef(false)
 
   // Load session on mount
@@ -62,9 +61,7 @@ export const useSessionManager = (): void => {
 
           // Restore selected note
           if (result.session.selected_note && notes) {
-            const idx = notes.findIndex(
-              (n) => n.title === result.session.selected_note
-            )
+            const idx = notes.findIndex((n) => n.title === result.session.selected_note)
             if (idx >= 0) {
               setSelectedIndex(idx)
             }
@@ -97,13 +94,7 @@ export const useSessionManager = (): void => {
       }
     }
     load()
-  }, [])
-
-  // Persist atom changes to session
-  useEffect(() => {
-    if (!loadedRef.current) return
-    const mode = appModeAtom.init
-    // Debounce-save on changes (handled via separate effect below)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Save selected note index changes
@@ -136,10 +127,7 @@ export const useSessionSaver = (): void => {
   }, [appMode, fontSize, sidebarOpen, autocompleteOn, activeThemeCss, theme, aiSidebarWidth])
 }
 
-export const persistAiMessage = async (
-  role: string,
-  content: string
-): Promise<void> => {
+export const persistAiMessage = async (role: string, content: string): Promise<void> => {
   try {
     const sessionId = await window.context.session.getActiveId()
     if (sessionId != null) {
@@ -150,10 +138,7 @@ export const persistAiMessage = async (
   }
 }
 
-export const persistCouncilMessage = async (
-  persona: string,
-  content: string
-): Promise<void> => {
+export const persistCouncilMessage = async (persona: string, content: string): Promise<void> => {
   try {
     const sessionId = await window.context.session.getActiveId()
     if (sessionId != null) {

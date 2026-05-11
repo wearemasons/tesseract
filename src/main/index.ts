@@ -1,9 +1,18 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
 import { join } from 'path'
+import fs from 'fs-extra'
 import icon from '../../resources/icon.png?asset'
-import { createNote, deleteNote, getNotes, readNote, writeNote, readWorkspaceFile } from '@main/lib'
-import { generateAIResponse, generateAutocomplete } from '@main/lib/ai'
+import {
+  createNote,
+  deleteNote,
+  getNotes,
+  readNote,
+  writeNote,
+  readWorkspaceFile,
+  getNotesDir
+} from '@main/lib'
+import { generateAIResponse, generateAutocomplete, ChatMessage } from '@main/lib/ai'
 import {
   createSession,
   updateSession,
@@ -150,9 +159,24 @@ app.whenReady().then(() => {
   ipcMain.handle(
     'ai:generate',
     (_, prompt: string, history?: unknown[], context?: string, customSystemPrompt?: string) =>
-      generateAIResponse(prompt, history, context, customSystemPrompt)
+      generateAIResponse(prompt, history as ChatMessage[], context, customSystemPrompt)
   )
   ipcMain.handle('ai:autocomplete', (_, textBefore: string) => generateAutocomplete(textBefore))
+
+  ipcMain.handle('exportNote', async (_, title: string) => {
+    const result = await dialog.showSaveDialog({
+      title: 'Export Note',
+      defaultPath: join(getNotesDir(), `${title}.md`),
+      filters: [
+        { name: 'Markdown', extensions: ['md'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    })
+    if (!result.canceled && result.filePath) {
+      const sourcePath = join(getNotesDir(), `${title}.md`)
+      await fs.copyFile(sourcePath, result.filePath)
+    }
+  })
 
   // Session IPC handlers
   ipcMain.handle('session:getActiveId', () => activeSessionId)

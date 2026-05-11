@@ -9,7 +9,7 @@ export interface ChatMessage {
   text: string
 }
 
-const DEFAULT_SYSTEM_PROMPT = `You are an AI assistant in Tesseract, an Integrated Thinking Environment. You help users think through ideas, refine notes, and answer questions. Be concise and direct.`
+const DEFAULT_SYSTEM_PROMPT = `You are an AI assistant in Tesseract, an Integrated Thinking Environment. Tesseract is the graduation project of the Mason team: Seif Zakaria, Omar Adel, Beshoy Mahrous, and Boles Sa'ad. Help users think through ideas, refine notes, and answer questions. Be concise and direct.`
 
 async function zenChat(
   messages: { role: string; content: string }[],
@@ -40,7 +40,18 @@ async function zenChat(
   }
 
   const data = await response.json()
-  return data.choices?.[0]?.message?.content?.trim() || ''
+  const choice = data.choices?.[0]?.message
+  let result = choice?.content?.trim()
+  if (!result) {
+    const reasoning = choice?.reasoning_content?.trim()
+    if (reasoning) {
+      console.info('[zenChat] Using reasoning_content fallback')
+      result = reasoning
+    } else {
+      console.warn('[zenChat] Empty content. Model response:', JSON.stringify(data).slice(0, 500))
+    }
+  }
+  return result || ''
 }
 
 export async function generateAIResponse(
@@ -71,7 +82,7 @@ export async function generateAIResponse(
 
   try {
     const text = await zenChat(messages)
-    console.log('[AI] Response length:', text.length, '| Preview:', text.substring(0, 120))
+    console.info('[AI] Response length:', text.length, '| Preview:', text.substring(0, 120))
     return text
   } catch (error) {
     console.error('AI Generation Error:', error)
@@ -80,22 +91,37 @@ export async function generateAIResponse(
 }
 
 export async function generateAutocomplete(textBefore: string): Promise<string> {
-  if (!process.env.OPENCODE_ZEN_API_KEY) return ''
+  if (!process.env.OPENCODE_ZEN_API_KEY) {
+    console.warn('[Autocomplete] No API key configured')
+    return ''
+  }
 
   try {
-    const lastLine = textBefore.split('\n').pop() || textBefore
+    const lines = textBefore.split('\n')
+    const lastLine = lines.pop() || ''
+    const recentContext = lines.slice(-10).join('\n')
+
+    console.info('[Autocomplete] Context lines:', lines.length, '| Cursor line:', lastLine)
     const text = await zenChat(
       [
         {
+          role: 'system',
+          content:
+            'You are a text completion engine. First reason step by step about what comes next. Then output your final completion on a new line starting with exactly "CONTINUATION:" followed by the completion text.'
+        },
+        {
           role: 'user',
-          content: `Continue this sentence naturally. Output ONLY the continuation (no explanations, no repeating the input):\n\n${lastLine}`
+          content: recentContext ? `${recentContext}\n${lastLine}` : lastLine
         }
       ],
-      { maxTokens: 150, temperature: 0.2 }
+      { maxTokens: 4096, temperature: 0.2, model: 'big-pickle' }
     )
-    return text
+    const match = text?.match(/CONTINUATION:(.+)/s)
+    const result = match?.[1]?.trim() || text?.trim() || ''
+    console.info('[Autocomplete] zenChat returned:', result ? result.substring(0, 80) : '(empty)')
+    return result
   } catch (error) {
-    console.error('AI Autocomplete Error:', error)
+    console.error('[Autocomplete] Error in main process:', error)
     return ''
   }
 }

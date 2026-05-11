@@ -1,11 +1,13 @@
-import { useAtom, useSetAtom } from 'jotai'
+import { useAtom, useSetAtom, useAtomValue } from 'jotai'
 import {
   commandPaletteOpenAtom,
   themeAtom,
   fontSizeAtom,
   autocompleteEnabledAtom,
   themePickerOpenAtom,
-  sessionPickerOpenAtom
+  sessionPickerOpenAtom,
+  aboutDialogOpenAtom,
+  selectedNoteAtom
 } from '@renderer/store'
 import {
   CommandDialog,
@@ -15,7 +17,17 @@ import {
   CommandItem,
   CommandList
 } from './ui/command'
-import { LuMoon, LuPlus, LuMinus, LuRotateCcw, LuSparkles, LuPalette, LuHistory } from 'react-icons/lu'
+import {
+  LuMoon,
+  LuPlus,
+  LuMinus,
+  LuRotateCcw,
+  LuSparkles,
+  LuPalette,
+  LuHistory,
+  LuInfo,
+  LuDownload
+} from 'react-icons/lu'
 
 export const CommandPalette = () => {
   const [open, setOpen] = useAtom(commandPaletteOpenAtom)
@@ -24,6 +36,14 @@ export const CommandPalette = () => {
   const [autocompleteEnabled, setAutocompleteEnabled] = useAtom(autocompleteEnabledAtom)
   const setThemePickerOpen = useSetAtom(themePickerOpenAtom)
   const setSessionPickerOpen = useSetAtom(sessionPickerOpenAtom)
+  const setAboutOpen = useSetAtom(aboutDialogOpenAtom)
+  const selectedNote = useAtomValue(selectedNoteAtom)
+
+  const exportNote = async (): Promise<void> => {
+    if (!selectedNote?.title) return
+    setOpen(false)
+    await window.context.exportNote(selectedNote.title)
+  }
 
   const run = (fn: () => void) => {
     fn()
@@ -84,6 +104,22 @@ export const CommandPalette = () => {
           >
             <LuHistory className="mr-2" />
             <span>Load Session...</span>
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandGroup heading="Project">
+          <CommandItem onSelect={exportNote}>
+            <LuDownload className="mr-2" />
+            <span>Export Note</span>
+          </CommandItem>
+          <CommandItem
+            onSelect={() => {
+              setOpen(false)
+              setAboutOpen(true)
+            }}
+          >
+            <LuInfo className="mr-2" />
+            <span>About Tesseract</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

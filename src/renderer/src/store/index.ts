@@ -127,6 +127,8 @@ export const themePickerOpenAtom = atom<boolean>(false)
 
 export const sessionPickerOpenAtom = atom<boolean>(false)
 
+export const aboutDialogOpenAtom = atom<boolean>(false)
+
 export const aiSidebarWidthAtom = atom<number>(350)
 
 export const deleteNoteAtom = atom(null, async (get, set) => {

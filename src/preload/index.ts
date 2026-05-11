@@ -9,7 +9,8 @@ import {
   GenerateAIResponse,
   GenerateAutocomplete,
   ReadWorkspaceFile,
-  SessionApi
+  SessionApi,
+  ExportNote
 } from '../shared/types'
 
 if (!process.contextIsolated) {
@@ -31,6 +32,7 @@ try {
       ipcRenderer.invoke('ai:generate', ...args)) as GenerateAIResponse,
     generateAutocomplete: ((...args) =>
       ipcRenderer.invoke('ai:autocomplete', ...args)) as GenerateAutocomplete,
+    exportNote: ((...args) => ipcRenderer.invoke('exportNote', ...args)) as ExportNote,
     session: {
       getActiveId: () => ipcRenderer.invoke('session:getActiveId'),
       create: () => ipcRenderer.invoke('session:create'),

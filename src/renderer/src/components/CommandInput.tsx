@@ -4,6 +4,14 @@ import { notesAtom } from '@renderer/store'
 import { cn } from '@renderer/utils'
 import { LuSend } from 'react-icons/lu'
 
+interface Suggestion {
+  type: 'note' | 'command'
+  title?: string
+  label?: string
+  description?: string
+  lastEditTime?: number
+}
+
 interface CommandInputProps {
   placeholder?: string
   onSend: (text: string) => void
@@ -28,9 +36,7 @@ export const CommandInput = ({
 }: CommandInputProps) => {
   const [value, setValue] = useState('')
   const [suggestionType, setSuggestionType] = useState<'note' | 'command' | null>(null)
-  const [filteredSuggestions, setFilteredSuggestions] = useState<
-    { title?: string; label?: string; type: string }[]
-  >([])
+  const [filteredSuggestions, setFilteredSuggestions] = useState<Suggestion[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const notes = useAtomValue(notesAtom) || []
@@ -46,12 +52,21 @@ export const CommandInput = ({
     if (lastWord.startsWith('@')) {
       const query = lastWord.slice(1).toLowerCase()
       setSuggestionType('note')
-      setFilteredSuggestions(notes.filter((n) => n.title.toLowerCase().includes(query)))
+      setFilteredSuggestions(
+        notes
+          .filter((n) => n.title.toLowerCase().includes(query))
+          .map((n) => ({ ...n, type: 'note' as const }))
+      )
       setSelectedIndex(0)
     } else if (showCommands && val.startsWith('/') && !val.includes(' ', 1)) {
       const query = val.toLowerCase()
       setSuggestionType('command')
-      setFilteredSuggestions(COMMANDS.filter((c) => c.label.startsWith(query)))
+      setFilteredSuggestions(
+        COMMANDS.filter((c) => c.label.startsWith(query)).map((c) => ({
+          ...c,
+          type: 'command' as const
+        }))
+      )
       setSelectedIndex(0)
     } else {
       setSuggestionType(null)
@@ -80,7 +95,7 @@ export const CommandInput = ({
     }
   }
 
-  const applySuggestion = (suggestion: { title?: string; label?: string; type: string }) => {
+  const applySuggestion = (suggestion: Suggestion) => {
     const cursor = textareaRef.current?.selectionStart || 0
     const textBeforeCursor = value.slice(0, cursor)
     const textAfterCursor = value.slice(cursor)

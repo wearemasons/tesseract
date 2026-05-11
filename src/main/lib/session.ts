@@ -54,10 +54,14 @@ export const getDb = (): Database.Database => {
 
 const migrate = (): void => {
   const hasSchemaTable = db!
-    .prepare('SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'schema_version\'')
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'")
     .get()
   const currentVersion = hasSchemaTable
-    ? (db!.prepare('SELECT version FROM schema_version ORDER BY version DESC LIMIT 1').get() as { version: number })?.version ?? 0
+    ? ((
+        db!.prepare('SELECT version FROM schema_version ORDER BY version DESC LIMIT 1').get() as {
+          version: number
+        }
+      )?.version ?? 0)
     : 0
 
   if (currentVersion < 1) {
@@ -115,9 +119,9 @@ const migrate = (): void => {
   }
 
   if (currentVersion < 3) {
-    const hasColumn = db!.prepare(
-      "SELECT name FROM pragma_table_info('sessions') WHERE name = 'ai_sidebar_width'"
-    ).get()
+    const hasColumn = db!
+      .prepare("SELECT name FROM pragma_table_info('sessions') WHERE name = 'ai_sidebar_width'")
+      .get()
     if (!hasColumn) {
       db!.exec(`ALTER TABLE sessions ADD COLUMN ai_sidebar_width INTEGER;`)
     }
@@ -150,11 +154,7 @@ export const createSession = (): number => {
     hour: '2-digit',
     minute: '2-digit'
   })}`
-  const result = d
-    .prepare(
-      `INSERT INTO sessions (created_at, label) VALUES (?, ?)`
-    )
-    .run(now, label)
+  const result = d.prepare(`INSERT INTO sessions (created_at, label) VALUES (?, ?)`).run(now, label)
   return Number(result.lastInsertRowid)
 }
 
@@ -253,11 +253,7 @@ export const saveAiMessage = (sessionId: number, role: string, content: string):
   ).run(sessionId, role, content, Date.now())
 }
 
-export const saveCouncilMessage = (
-  sessionId: number,
-  persona: string,
-  content: string
-): void => {
+export const saveCouncilMessage = (sessionId: number, persona: string, content: string): void => {
   const d = getDb()
   d.prepare(
     'INSERT INTO council_messages (session_id, persona, content, timestamp) VALUES (?, ?, ?, ?)'
@@ -277,11 +273,9 @@ export const getWindowState = (): {
   maximized: boolean
 } | null => {
   const d = getDb()
-  const row = d
-    .prepare(
-      'SELECT value FROM meta WHERE key = ?'
-    )
-    .get('window_state') as { value: string } | undefined
+  const row = d.prepare('SELECT value FROM meta WHERE key = ?').get('window_state') as
+    | { value: string }
+    | undefined
   if (!row) return null
   try {
     return JSON.parse(row.value)
@@ -298,19 +292,24 @@ export const setWindowState = (state: {
   maximized: boolean
 }): void => {
   const d = getDb()
-  const existing = d.prepare('SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'meta\'').get()
+  const existing = d
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'")
+    .get()
   if (!existing) {
     d.exec('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
   }
-  d.prepare(
-    'INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)'
-  ).run('window_state', JSON.stringify(state))
+  d.prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)').run(
+    'window_state',
+    JSON.stringify(state)
+  )
 }
 
 export const getMeta = (key: string): string | null => {
   const d = getDb()
   try {
-    const existing = d.prepare('SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'meta\'').get()
+    const existing = d
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'")
+      .get()
     if (!existing) return null
     const row = d.prepare('SELECT value FROM meta WHERE key = ?').get(key) as
       | { value: string }
@@ -324,7 +323,9 @@ export const getMeta = (key: string): string | null => {
 export const setMeta = (key: string, value: string): void => {
   const d = getDb()
   try {
-    const existing = d.prepare('SELECT name FROM sqlite_master WHERE type=\'table\' AND name=\'meta\'').get()
+    const existing = d
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'")
+      .get()
     if (!existing) {
       d.exec('CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
     }

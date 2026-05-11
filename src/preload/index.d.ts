@@ -8,7 +8,8 @@ import {
   GenerateAIResponse,
   GenerateAutocomplete,
   ReadWorkspaceFile,
-  SessionApi
+  SessionApi,
+  ExportNote
 } from '../shared/types'
 
 declare global {
@@ -24,6 +25,7 @@ declare global {
       deleteNote: DeleteNote
       generateAIResponse: GenerateAIResponse
       generateAutocomplete: GenerateAutocomplete
+      exportNote: ExportNote
       session: SessionApi
     }
   }

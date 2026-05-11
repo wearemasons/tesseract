@@ -1,29 +1,17 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getSelection, $isRangeSelection, $createTextNode } from 'lexical'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { useAtom } from 'jotai'
+import { useAtomValue } from 'jotai'
 import { autocompleteEnabledAtom } from '@renderer/store'
 import { $createAutocompleteNode, $isAutocompleteNode } from './AutocompleteNode'
 
 export const AutocompletePlugin = () => {
   const [editor] = useLexicalComposerContext()
   const [suggestion, setSuggestion] = useState<string | null>(null)
-  const [autocompleteEnabled, setAutocompleteEnabled] = useAtom(autocompleteEnabledAtom)
+  const autocompleteEnabled = useAtomValue(autocompleteEnabledAtom)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const ghostNodeKey = useRef<string | null>(null)
   const isFetchingRef = useRef(false)
-
-  const flashEditor = useCallback(() => {
-    const root = editor.getRootElement()
-    if (!root) return
-    root.classList.add('autocomplete-flash')
-    setTimeout(() => root.classList.remove('autocomplete-flash'), 350)
-  }, [editor])
-
-  const toggleAutocomplete = useCallback(() => {
-    setAutocompleteEnabled((prev) => !prev)
-    flashEditor()
-  }, [setAutocompleteEnabled, flashEditor])
 
   const clearSuggestion = useCallback(() => {
     if (ghostNodeKey.current) {
@@ -61,7 +49,7 @@ export const AutocompletePlugin = () => {
         if (!autocompleteEnabled) return
         timeoutRef.current = setTimeout(() => {
           triggerAutocomplete()
-        }, 1200)
+        }, 600)
       })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,17 +77,6 @@ export const AutocompletePlugin = () => {
   }, [editor, suggestion])
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.altKey && e.key === 'a') {
-        e.preventDefault()
-        toggleAutocomplete()
-      }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [toggleAutocomplete])
-
-  useEffect(() => {
     if (!autocompleteEnabled) {
       clearSuggestion()
     }
@@ -117,16 +94,43 @@ export const AutocompletePlugin = () => {
 
     try {
       let textBefore = ''
+      let contextAbove = ''
       editor.getEditorState().read(() => {
         const selection = $getSelection()
         if (!$isRangeSelection(selection)) return
-        textBefore = selection.anchor.getNode().getTextContent().slice(0, selection.anchor.offset)
+
+        const anchorNode = selection.anchor.getNode()
+        const anchorOffset = selection.anchor.offset
+
+        const nodeText = anchorNode.getTextContent()
+        if (nodeText.length > 0) {
+          textBefore = nodeText.slice(0, Math.min(anchorOffset, nodeText.length))
+        } else {
+          const parent = anchorNode.getParent()
+          if (parent) {
+            textBefore = parent.getTextContent().slice(0, anchorOffset)
+          }
+        }
+
+        const block = anchorNode.getParentOrThrow()
+        let current = block.getPreviousSibling()
+        const contextLines: string[] = []
+        while (current && contextLines.length < 10) {
+          const text = current.getTextContent()
+          if (text) contextLines.unshift(text)
+          current = current.getPreviousSibling()
+        }
+        contextAbove = contextLines.join('\n')
       })
 
-      if (textBefore.length < 5) return
+      const fullText = contextAbove ? `${contextAbove}\n${textBefore}` : textBefore
 
-      const completion = await window.context.generateAutocomplete(textBefore)
+      if (textBefore.trim().length < 3) return
+
+      console.info('[Autocomplete] Context lines:', contextAbove.split('\n').length, '| Cursor line:', textBefore)
+      const completion = await window.context.generateAutocomplete(fullText)
       if (completion && completion.trim()) {
+        console.info('[Autocomplete] Got completion:', completion.substring(0, 80))
         setSuggestion(completion)
         editor.update(
           () => {
@@ -139,9 +143,11 @@ export const AutocompletePlugin = () => {
           },
           { tag: 'autocomplete' }
         )
+      } else {
+        console.warn('[Autocomplete] Empty response from API for text:', textBefore)
       }
     } catch (error) {
-      console.error('Autocomplete error:', error)
+      console.error('[Autocomplete] Error:', error)
     } finally {
       isFetchingRef.current = false
     }

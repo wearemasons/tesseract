@@ -20,6 +20,8 @@ export type GenerateAIResponse = (
 ) => Promise<string>
 export type GenerateAutocomplete = (textBefore: string) => Promise<string>
 
+export type ExportNote = (title: string) => Promise<void>
+
 export interface SessionRow {
   id: number
   created_at: number

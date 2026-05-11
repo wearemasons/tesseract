@@ -13,6 +13,7 @@ import { PERSONA_PROMPTS, resolveNoteReferences } from '@renderer/utils/ai'
 import { LuUsers, LuLoader } from 'react-icons/lu'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Shimmer } from './ai/shimmer'
 
 const personaStyles: Record<CouncilPersona, { name: string; color: string; bg: string }> = {
   visionary: {
@@ -119,13 +120,13 @@ export const CouncilArena = () => {
     addMessage('user', text)
     setIsLoading(true)
 
-    console.log('[CouncilArena] Handling send for text:', text)
+    console.info('[CouncilArena] Handling send for text:', text)
 
     try {
-      console.log('[CouncilArena] Resolving note references...')
+      console.info('[CouncilArena] Resolving note references...')
       const { cleanText, context: refContext, referencedTitles } = await resolveNoteReferences(text)
-      console.log('[CouncilArena] Resolved refContext length:', refContext.length)
-      console.log('[CouncilArena] Referenced titles:', referencedTitles)
+      console.info('[CouncilArena] Resolved refContext length:', refContext.length)
+      console.info('[CouncilArena] Referenced titles:', referencedTitles)
 
       let fullContext = ''
       if (refContext) {
@@ -174,9 +175,10 @@ export const CouncilArena = () => {
       }
     } catch (error) {
       console.error('[CouncilArena] Error in handleSend:', error)
+      const errorMsg = error instanceof Error ? error.message : 'Please check your API key.'
       addMessage(
         'pragmatist',
-        'I apologize, Judge. My connection to the higher planes is currently severed. Please check your API key.'
+        `I apologize, Judge. My connection to the higher planes is currently severed. ${errorMsg}`
       )
     } finally {
       setIsLoading(false)
@@ -263,6 +265,16 @@ export const CouncilArena = () => {
         {messages.map((msg) => (
           <ChatMessage key={msg.id} message={msg} />
         ))}
+        {isLoading && (
+          <div className="flex flex-col gap-1 p-4 rounded-lg animate-in fade-in slide-in-from-bottom-2 bg-muted/50">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm text-primary">Thinking...</span>
+            </div>
+            <div className="text-sm leading-relaxed">
+              <Shimmer>Consulting the council</Shimmer>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 

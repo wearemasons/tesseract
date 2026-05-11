@@ -1,7 +1,7 @@
 export async function resolveNoteReferences(
   text: string
 ): Promise<{ cleanText: string; context: string; referencedTitles: string[] }> {
-  console.log('[resolveNoteReferences] Input text:', text)
+  console.info('[resolveNoteReferences] Input text:', text)
   // Matches @[Note Title] or @NoteTitle (for backward compatibility if no spaces)
   const bracketRefs = [...text.matchAll(/@\[([^\]]+)\]/g)]
   const simpleRefs = [...text.matchAll(/(?<!\[)@([\w./-]+)/g)]
@@ -27,12 +27,12 @@ export async function resolveNoteReferences(
   cleanText = cleanText.replace(/\s{2,}/g, ' ').trim()
 
   const referencedTitles = Array.from(titlesToFetch)
-  console.log('[resolveNoteReferences] Titles to fetch:', referencedTitles)
-  console.log('[resolveNoteReferences] Cleaned text:', cleanText)
+  console.info('[resolveNoteReferences] Titles to fetch:', referencedTitles)
+  console.info('[resolveNoteReferences] Cleaned text:', cleanText)
 
   for (const title of titlesToFetch) {
     try {
-      console.log(`[resolveNoteReferences] Attempting to read note: "${title}"`)
+      console.info(`[resolveNoteReferences] Attempting to read note: "${title}"`)
 
       let content = ''
       try {
@@ -41,13 +41,13 @@ export async function resolveNoteReferences(
       } catch {
         // If it fails (e.g., doesn't exist in Notes dir), try reading it as a workspace file
         // This supports developers referencing @src/components/MyComponent.tsx
-        console.log(
+        console.info(
           `[resolveNoteReferences] Note not found, trying workspace file fallback: "${title}"`
         )
         content = await window.context.readWorkspaceFile(title)
       }
 
-      console.log(
+      console.info(
         `[resolveNoteReferences] Successfully read reference: "${title}". Content length:`,
         content.length
       )
@@ -57,7 +57,7 @@ export async function resolveNoteReferences(
     }
   }
 
-  console.log('[resolveNoteReferences] Final context length:', context.length)
+  console.info('[resolveNoteReferences] Final context length:', context.length)
   return { cleanText, context, referencedTitles }
 }
 
