@@ -91,7 +91,7 @@ app.whenReady().then(() => {
   // AI IPC handlers
   ipcMain.handle(
     'ai:generate',
-    (_, prompt: string, history?: any[], context?: string, customSystemPrompt?: string) =>
+    (_, prompt: string, history?: unknown[], context?: string, customSystemPrompt?: string) =>
       generateAIResponse(prompt, history, context, customSystemPrompt)
   )
   ipcMain.handle('ai:autocomplete', (_, textBefore: string) => generateAutocomplete(textBefore))

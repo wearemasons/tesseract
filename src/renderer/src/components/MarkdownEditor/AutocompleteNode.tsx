@@ -4,7 +4,6 @@ import {
   EditorConfig,
   LexicalNode,
   SerializedLexicalNode,
-  DOMExportOutput,
   LexicalEditor
 } from 'lexical'
 import React from 'react'
@@ -63,6 +62,8 @@ export function $createAutocompleteNode(text: string): AutocompleteNode {
   return new AutocompleteNode(text)
 }
 
-export function $isAutocompleteNode(node: LexicalNode | null | undefined): node is AutocompleteNode {
+export function $isAutocompleteNode(
+  node: LexicalNode | null | undefined
+): node is AutocompleteNode {
   return node instanceof AutocompleteNode
 }

@@ -1,9 +1,5 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import {
-  $getSelection,
-  $isRangeSelection,
-  $createTextNode
-} from 'lexical'
+import { $getSelection, $isRangeSelection, $createTextNode } from 'lexical'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAtom } from 'jotai'
 import { autocompleteEnabledAtom } from '@renderer/store'
@@ -68,6 +64,7 @@ export const AutocompletePlugin = () => {
         }, 1200)
       })
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, clearSuggestion, autocompleteEnabled])
 
   useEffect(() => {
@@ -88,6 +85,7 @@ export const AutocompletePlugin = () => {
     }
     root.addEventListener('keydown', handler)
     return () => root.removeEventListener('keydown', handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, suggestion])
 
   useEffect(() => {

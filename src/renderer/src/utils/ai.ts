@@ -1,12 +1,14 @@
-export async function resolveNoteReferences(text: string): Promise<{ cleanText: string; context: string; referencedTitles: string[] }> {
+export async function resolveNoteReferences(
+  text: string
+): Promise<{ cleanText: string; context: string; referencedTitles: string[] }> {
   console.log('[resolveNoteReferences] Input text:', text)
   // Matches @[Note Title] or @NoteTitle (for backward compatibility if no spaces)
   const bracketRefs = [...text.matchAll(/@\[([^\]]+)\]/g)]
   const simpleRefs = [...text.matchAll(/(?<!\[)@([\w./-]+)/g)]
-  
+
   let context = ''
   let cleanText = text
-  
+
   const titlesToFetch = new Set<string>()
 
   for (const match of bracketRefs) {
@@ -14,7 +16,7 @@ export async function resolveNoteReferences(text: string): Promise<{ cleanText: 
     // Strip the @[...] reference from cleanText
     cleanText = cleanText.replace(match[0], '').trim()
   }
-  
+
   for (const match of simpleRefs) {
     titlesToFetch.add(match[1].trim())
     // Strip the @word reference from cleanText
@@ -31,19 +33,24 @@ export async function resolveNoteReferences(text: string): Promise<{ cleanText: 
   for (const title of titlesToFetch) {
     try {
       console.log(`[resolveNoteReferences] Attempting to read note: "${title}"`)
-      
+
       let content = ''
       try {
         // Try reading as a standard note first
         content = await window.context.readNote(title)
-      } catch (err) {
+      } catch {
         // If it fails (e.g., doesn't exist in Notes dir), try reading it as a workspace file
         // This supports developers referencing @src/components/MyComponent.tsx
-        console.log(`[resolveNoteReferences] Note not found, trying workspace file fallback: "${title}"`)
+        console.log(
+          `[resolveNoteReferences] Note not found, trying workspace file fallback: "${title}"`
+        )
         content = await window.context.readWorkspaceFile(title)
       }
-      
-      console.log(`[resolveNoteReferences] Successfully read reference: "${title}". Content length:`, content.length)
+
+      console.log(
+        `[resolveNoteReferences] Successfully read reference: "${title}". Content length:`,
+        content.length
+      )
       context += `Reference: ${title}\nContent:\n${content}\n\n`
     } catch (e) {
       console.warn(`[resolveNoteReferences] Could not resolve reference: "${title}"`, e)

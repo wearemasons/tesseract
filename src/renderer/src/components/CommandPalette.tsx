@@ -14,14 +14,7 @@ import {
   CommandItem,
   CommandList
 } from './ui/command'
-import {
-  LuMoon,
-  LuPlus,
-  LuMinus,
-  LuRotateCcw,
-  LuSparkles,
-  LuPalette
-} from 'react-icons/lu'
+import { LuMoon, LuPlus, LuMinus, LuRotateCcw, LuSparkles, LuPalette } from 'react-icons/lu'
 
 export const CommandPalette = () => {
   const [open, setOpen] = useAtom(commandPaletteOpenAtom)
@@ -56,11 +49,7 @@ export const CommandPalette = () => {
             <LuRotateCcw className="mr-2" />
             <span>Reset Font Size</span>
           </CommandItem>
-          <CommandItem
-            onSelect={() =>
-              run(() => setAutocompleteEnabled((prev) => !prev))
-            }
-          >
+          <CommandItem onSelect={() => run(() => setAutocompleteEnabled((prev) => !prev))}>
             <LuSparkles className="mr-2" />
             <span>{autocompleteEnabled ? 'Disable' : 'Enable'} Autocomplete</span>
           </CommandItem>
@@ -68,9 +57,7 @@ export const CommandPalette = () => {
 
         <CommandGroup heading="Theme">
           <CommandItem
-            onSelect={() =>
-              run(() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark')))
-            }
+            onSelect={() => run(() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark')))}
           >
             <LuMoon className="mr-2" />
             <span>Toggle Theme</span>

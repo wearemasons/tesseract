@@ -73,16 +73,7 @@ for (const issue of issues) {
     const labels = issue.labels.join(',')
     const result = spawnSync(
       'gh',
-      [
-        'issue',
-        'create',
-        '--title',
-        issue.title,
-        '--body',
-        issue.body,
-        '--label',
-        labels
-      ],
+      ['issue', 'create', '--title', issue.title, '--body', issue.body, '--label', labels],
       { encoding: 'utf8' }
     )
 

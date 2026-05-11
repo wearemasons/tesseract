@@ -1,3 +1,4 @@
+import { ComponentType } from 'react'
 import { useAtom, useSetAtom } from 'jotai'
 import { appModeAtom, AppMode, notesSidebarOpenAtom } from '@renderer/store'
 import { LuFiles, LuBot, LuUsers } from 'react-icons/lu'
@@ -21,10 +22,20 @@ export const ActivityBar = () => {
     setMode((prev) => (prev === 'ai' ? 'notes' : 'ai'))
   }
 
-  const navItems: { mode: AppMode; icon: any; label: string; onClick: () => void }[] = [
+  const navItems: {
+    mode: AppMode
+    icon: ComponentType<{ className?: string }>
+    label: string
+    onClick: () => void
+  }[] = [
     { mode: 'notes', icon: LuFiles, label: 'Notes', onClick: handleNotes },
     { mode: 'ai', icon: LuBot, label: 'AI Companion', onClick: handleAI },
-    { mode: 'council', icon: LuUsers, label: 'Council of Thought', onClick: () => setMode('council') }
+    {
+      mode: 'council',
+      icon: LuUsers,
+      label: 'Council of Thought',
+      onClick: () => setMode('council')
+    }
   ]
 
   return (

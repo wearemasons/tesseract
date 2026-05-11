@@ -30,10 +30,7 @@ export const ThemePicker = () => {
               className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background shrink-0">
-                <div
-                  className="h-4 w-4 rounded-full"
-                  style={{ background: theme.swatch }}
-                />
+                <div className="h-4 w-4 rounded-full" style={{ background: theme.swatch }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm">{theme.name}</div>

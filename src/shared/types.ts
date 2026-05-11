@@ -12,6 +12,10 @@ export interface ChatMessage {
   text: string
 }
 
-export type GenerateAIResponse = (prompt: string, history?: ChatMessage[], context?: string, customSystemPrompt?: string) => Promise<string>
+export type GenerateAIResponse = (
+  prompt: string,
+  history?: ChatMessage[],
+  context?: string,
+  customSystemPrompt?: string
+) => Promise<string>
 export type GenerateAutocomplete = (textBefore: string) => Promise<string>
-

@@ -60,7 +60,16 @@ export const MarkdownEditor = ({ className }: { className?: string }) => {
           thematicBreakPlugin(),
           frontmatterPlugin(),
           codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-          codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', ts: 'TypeScript', txt: 'Text', css: 'CSS', html: 'HTML', json: 'JSON' } }),
+          codeMirrorPlugin({
+            codeBlockLanguages: {
+              js: 'JavaScript',
+              ts: 'TypeScript',
+              txt: 'Text',
+              css: 'CSS',
+              html: 'HTML',
+              json: 'JSON'
+            }
+          }),
           directivesPlugin({ directiveDescriptors: [] }),
           diffSourcePlugin({ diffMarkdown: 'boo', viewMode: 'rich-text' }),
           markdownShortcutPlugin(),

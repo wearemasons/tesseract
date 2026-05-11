@@ -1,5 +1,10 @@
 import { useAtomValue, useAtom } from 'jotai'
-import { selectedNoteAtom, councilMessagesAtom, CouncilPersona, CouncilMessage } from '@renderer/store'
+import {
+  selectedNoteAtom,
+  councilMessagesAtom,
+  CouncilPersona,
+  CouncilMessage
+} from '@renderer/store'
 import { cn } from '@renderer/utils'
 import { useState, useRef, useEffect } from 'react'
 import { CommandInput } from './CommandInput'
@@ -39,7 +44,12 @@ const personaStyles: Record<CouncilPersona, { name: string; color: string; bg: s
 const ChatMessage = ({ message }: { message: CouncilMessage }) => {
   const style = personaStyles[message.persona]
   return (
-    <div className={cn('flex flex-col gap-1 p-4 rounded-lg animate-in fade-in slide-in-from-bottom-2', style.bg)}>
+    <div
+      className={cn(
+        'flex flex-col gap-1 p-4 rounded-lg animate-in fade-in slide-in-from-bottom-2',
+        style.bg
+      )}
+    >
       <div className="flex items-center gap-2">
         <span className={cn('font-bold text-sm', style.color)}>{style.name}</span>
         <span className="text-[10px] text-muted-foreground">
@@ -65,9 +75,8 @@ const ChatMessage = ({ message }: { message: CouncilMessage }) => {
 function buildHistoryForPersona(messages: CouncilMessage[]) {
   return messages.map((msg) => ({
     role: msg.persona === 'user' ? ('user' as const) : ('model' as const),
-    text: msg.persona === 'user' 
-      ? msg.content 
-      : `[${personaStyles[msg.persona].name}]: ${msg.content}`
+    text:
+      msg.persona === 'user' ? msg.content : `[${personaStyles[msg.persona].name}]: ${msg.content}`
   }))
 }
 
@@ -115,7 +124,7 @@ export const CouncilArena = () => {
       const { cleanText, context: refContext, referencedTitles } = await resolveNoteReferences(text)
       console.log('[CouncilArena] Resolved refContext length:', refContext.length)
       console.log('[CouncilArena] Referenced titles:', referencedTitles)
-      
+
       let fullContext = ''
       if (refContext) {
         fullContext += `\n\n[REFERENCED NOTES - YOUR RESPONSE MUST BE ABOUT THIS CONTENT]:\n${refContext}`
@@ -127,23 +136,46 @@ export const CouncilArena = () => {
       if (cleanText.startsWith('/debate')) {
         const userTopic = cleanText.replace('/debate', '').trim()
         // Use referenced note titles as the topic if available, otherwise fall back
-        const topic = userTopic || (referencedTitles.length > 0 ? referencedTitles.join(', ') : selectedNote?.title || 'this idea')
+        const topic =
+          userTopic ||
+          (referencedTitles.length > 0
+            ? referencedTitles.join(', ')
+            : selectedNote?.title || 'this idea')
         await runDebate(topic, fullContext)
       } else if (cleanText.startsWith('/summarize')) {
-        await runSinglePersona('pragmatist', 'Summarize the current discussion into a concise, actionable conclusion.', fullContext)
+        await runSinglePersona(
+          'pragmatist',
+          'Summarize the current discussion into a concise, actionable conclusion.',
+          fullContext
+        )
       } else if (cleanText.startsWith('/brainstorm')) {
-        await runSinglePersona('visionary', `Brainstorm 5 creative and wild possibilities for: ${cleanText.replace('/brainstorm', '')}`, fullContext)
+        await runSinglePersona(
+          'visionary',
+          `Brainstorm 5 creative and wild possibilities for: ${cleanText.replace('/brainstorm', '')}`,
+          fullContext
+        )
       } else if (cleanText.startsWith('/critique')) {
-        await runSinglePersona('skeptic', `Identify all potential failure points and risks for: ${cleanText.replace('/critique', '')}`, fullContext)
+        await runSinglePersona(
+          'skeptic',
+          `Identify all potential failure points and risks for: ${cleanText.replace('/critique', '')}`,
+          fullContext
+        )
       } else if (cleanText.startsWith('/resolve')) {
-        await runDebate('Coming to a final resolution', fullContext, 'Focus on reaching a consensus.')
+        await runDebate(
+          'Coming to a final resolution',
+          fullContext,
+          'Focus on reaching a consensus.'
+        )
       } else {
         // Default: Pragmatist answers
         await runSinglePersona('pragmatist', cleanText, fullContext)
       }
     } catch (error) {
       console.error('[CouncilArena] Error in handleSend:', error)
-      addMessage('pragmatist', 'I apologize, Judge. My connection to the higher planes is currently severed. Please check your API key.')
+      addMessage(
+        'pragmatist',
+        'I apologize, Judge. My connection to the higher planes is currently severed. Please check your API key.'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -182,7 +214,7 @@ export const CouncilArena = () => {
         )
         roundOutputs[persona] = response
         addMessage(persona, response)
-        await new Promise(r => setTimeout(r, 300))
+        await new Promise((r) => setTimeout(r, 300))
       }
 
       // 2. Fire the Synthesizer reactively — it gets the three outputs injected
@@ -195,7 +227,7 @@ export const CouncilArena = () => {
         PERSONA_PROMPTS.synthesizer
       )
       addMessage('synthesizer', synthResponse)
-      await new Promise(r => setTimeout(r, 300))
+      await new Promise((r) => setTimeout(r, 300))
     }
   }
 
@@ -218,8 +250,10 @@ export const CouncilArena = () => {
             <div className="space-y-2">
               <h3 className="font-bold">The Council is Assembled</h3>
               <p className="text-sm text-muted-foreground italic">
-                Type <code className="bg-muted px-1 rounded">/debate</code> to start a discussion, or 
-                <code className="bg-muted px-1 rounded">@note</code> to bring external context into the arena.
+                Type <code className="bg-muted px-1 rounded">/debate</code> to start a discussion,
+                or
+                <code className="bg-muted px-1 rounded">@note</code> to bring external context into
+                the arena.
               </p>
             </div>
           </div>
@@ -232,9 +266,9 @@ export const CouncilArena = () => {
 
       <div className="p-6 border-t border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-4xl mx-auto">
-          <CommandInput 
-            onSend={handleSend} 
-            placeholder="Type /debate to start or ask the Judge..." 
+          <CommandInput
+            onSend={handleSend}
+            placeholder="Type /debate to start or ask the Judge..."
             showCommands={true}
             disabled={isLoading}
           />

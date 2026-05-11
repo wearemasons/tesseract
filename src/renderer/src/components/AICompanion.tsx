@@ -1,5 +1,10 @@
 import { useAtomValue, useAtom, useSetAtom } from 'jotai'
-import { selectedNoteAtom, aiMessagesAtom, saveNoteAtom, pendingWriteContentAtom } from '@renderer/store'
+import {
+  selectedNoteAtom,
+  aiMessagesAtom,
+  saveNoteAtom,
+  pendingWriteContentAtom
+} from '@renderer/store'
 import { cn } from '@renderer/utils'
 import { useState, useRef, useEffect } from 'react'
 import { LuBrain, LuLoader, LuFilePen } from 'react-icons/lu'
@@ -57,7 +62,12 @@ export const AICompanion = () => {
 
       if (isWriteCommand) {
         const writeContext = `Current note content:\n${selectedNote?.content || ''}\n\nUser request:\n${writePrompt || cleanText}`
-        const response = await window.context.generateAIResponse('', history, writeContext, WRITE_SYSTEM_PROMPT)
+        const response = await window.context.generateAIResponse(
+          '',
+          history,
+          writeContext,
+          WRITE_SYSTEM_PROMPT
+        )
         if (response && selectedNote) {
           await saveNote(response)
           setPendingWriteContent(response)
@@ -77,7 +87,7 @@ export const AICompanion = () => {
         const response = await window.context.generateAIResponse(cleanText, history, fullContext)
         setMessages((prev) => [...prev, { role: 'assistant', content: response }])
       }
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { role: 'assistant', content: 'Sorry, I encountered an error. Please check your API key.' }
@@ -142,7 +152,12 @@ export const AICompanion = () => {
       </div>
 
       <div className="p-4 border-t border-border bg-background/50">
-        <CommandInput onSend={handleSend} placeholder="Ask anything, @note..., or /write ..." disabled={isLoading} showCommands={true} />
+        <CommandInput
+          onSend={handleSend}
+          placeholder="Ask anything, @note..., or /write ..."
+          disabled={isLoading}
+          showCommands={true}
+        />
         <p className="text-[10px] text-center text-muted-foreground mt-2 opacity-50">
           Powered by Gemma 4 31B Instruct Tuned
         </p>

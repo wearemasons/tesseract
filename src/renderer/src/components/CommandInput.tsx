@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { useAtomValue } from 'jotai'
 import { notesAtom } from '@renderer/store'
 import { cn } from '@renderer/utils'
@@ -20,12 +20,18 @@ const COMMANDS = [
   { label: '/resolve', description: 'Force a final agreement' }
 ]
 
-export const CommandInput = ({ placeholder, onSend, showCommands = false, disabled = false }: CommandInputProps) => {
+export const CommandInput = ({
+  placeholder,
+  onSend,
+  showCommands = false,
+  disabled = false
+}: CommandInputProps) => {
   const [value, setValue] = useState('')
   const [suggestionType, setSuggestionType] = useState<'note' | 'command' | null>(null)
-  const [filteredSuggestions, setFilteredSuggestions] = useState<any[]>([])
+  const [filteredSuggestions, setFilteredSuggestions] = useState<
+    { title?: string; label?: string; type: string }[]
+  >([])
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [cursorPos, setCursorPos] = useState({ top: 0, left: 0 })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const notes = useAtomValue(notesAtom) || []
 
@@ -59,7 +65,9 @@ export const CommandInput = ({ placeholder, onSend, showCommands = false, disabl
         setSelectedIndex((prev) => (prev + 1) % filteredSuggestions.length)
       } else if (e.key === 'ArrowUp') {
         e.preventDefault()
-        setSelectedIndex((prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length)
+        setSelectedIndex(
+          (prev) => (prev - 1 + filteredSuggestions.length) % filteredSuggestions.length
+        )
       } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault()
         applySuggestion(filteredSuggestions[selectedIndex])
@@ -72,16 +80,17 @@ export const CommandInput = ({ placeholder, onSend, showCommands = false, disabl
     }
   }
 
-  const applySuggestion = (suggestion: any) => {
+  const applySuggestion = (suggestion: { title?: string; label?: string; type: string }) => {
     const cursor = textareaRef.current?.selectionStart || 0
     const textBeforeCursor = value.slice(0, cursor)
     const textAfterCursor = value.slice(cursor)
     const words = textBeforeCursor.split(/\s/)
     words.pop()
-    
-    const replacement = suggestionType === 'note' ? `@[${suggestion.title}] ` : `${suggestion.label} `
+
+    const replacement =
+      suggestionType === 'note' ? `@[${suggestion.title}] ` : `${suggestion.label} `
     const newValue = words.join(' ') + (words.length > 0 ? ' ' : '') + replacement + textAfterCursor
-    
+
     setValue(newValue)
     setSuggestionType(null)
     setTimeout(() => {
@@ -115,7 +124,9 @@ export const CommandInput = ({ placeholder, onSend, showCommands = false, disabl
                   i === selectedIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
                 )}
               >
-                <span className="font-medium">{suggestionType === 'note' ? item.title : item.label}</span>
+                <span className="font-medium">
+                  {suggestionType === 'note' ? item.title : item.label}
+                </span>
                 {suggestionType === 'command' && (
                   <span className="text-[10px] opacity-70">{item.description}</span>
                 )}
@@ -141,8 +152,8 @@ export const CommandInput = ({ placeholder, onSend, showCommands = false, disabl
           disabled={!value.trim() || disabled}
           className={cn(
             'p-2 rounded-xl transition-all shrink-0',
-            value.trim() 
-              ? 'bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95' 
+            value.trim()
+              ? 'bg-primary text-primary-foreground shadow-lg hover:scale-105 active:scale-95'
               : 'text-muted-foreground opacity-50 cursor-not-allowed'
           )}
         >

@@ -9,12 +9,6 @@ export const appModeAtom = atom<AppMode>('notes')
 export type Theme = 'light' | 'dark' | 'system'
 export const themeAtom = atomWithStorage<Theme>('theme', 'dark')
 
-export type AppMode = 'notes' | 'ai' | 'council'
-export const appModeAtom = atom<AppMode>('notes')
-
-export type Theme = 'light' | 'dark' | 'system'
-export const themeAtom = atom<Theme>('dark')
-
 export interface AIMessage {
   role: 'user' | 'assistant'
   content: string

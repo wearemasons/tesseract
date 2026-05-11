@@ -4,7 +4,6 @@ import {
   AICompanion,
   Content,
   CouncilArena,
-  DraggableTopBar,
   FloatingNoteTitle,
   MarkdownEditor,
   NotePreviewList,
@@ -16,7 +15,12 @@ import {
 } from './components'
 import { ActionButtonsRow } from './components/ActionButtonRow'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { appModeAtom, commandPaletteOpenAtom, activeThemeCssAtom, notesSidebarOpenAtom } from './store'
+import {
+  appModeAtom,
+  commandPaletteOpenAtom,
+  activeThemeCssAtom,
+  notesSidebarOpenAtom
+} from './store'
 
 function App(): JSX.Element {
   const contentContainerRef = useRef<HTMLDivElement>(null)
@@ -82,7 +86,7 @@ function App(): JSX.Element {
       {/*<DraggableTopBar />*/}
       <RootLayout className="flex-1 flex overflow-hidden">
         <ActivityBar />
-        
+
         {mode !== 'council' && notesSidebarOpen && (
           <Sidebar className="p-2 border-r border-border bg-card/30">
             <ActionButtonsRow className="flex justify-between mt-1" />
@@ -96,15 +100,21 @@ function App(): JSX.Element {
             <div className="space-y-4">
               <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                 <div className="font-bold text-xs text-amber-500 mb-1">The Visionary</div>
-                <div className="text-[10px] text-muted-foreground leading-tight">Focusing on high-level goals and potential.</div>
+                <div className="text-[10px] text-muted-foreground leading-tight">
+                  Focusing on high-level goals and potential.
+                </div>
               </div>
               <div className="p-3 rounded-lg bg-slate-400/10 border border-slate-400/20">
                 <div className="font-bold text-xs text-slate-400 mb-1">The Skeptic</div>
-                <div className="text-[10px] text-muted-foreground leading-tight">Analyzing risks and identifying flaws.</div>
+                <div className="text-[10px] text-muted-foreground leading-tight">
+                  Analyzing risks and identifying flaws.
+                </div>
               </div>
               <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                 <div className="font-bold text-xs text-emerald-500 mb-1">The Pragmatist</div>
-                <div className="text-[10px] text-muted-foreground leading-tight">Ensuring execution and resource management.</div>
+                <div className="text-[10px] text-muted-foreground leading-tight">
+                  Ensuring execution and resource management.
+                </div>
               </div>
             </div>
           </Sidebar>
@@ -119,7 +129,7 @@ function App(): JSX.Element {
                 <FloatingNoteTitle className="pt-2" />
                 <MarkdownEditor className="pt-2 flex-1" />
               </div>
-              
+
               {mode === 'ai' && (
                 <ResizableSidebar side="right" defaultWidth={350} minWidth={250} maxWidth={500}>
                   <AICompanion />
