@@ -1,8 +1,7 @@
 import 'dotenv/config'
 
-const ZEN_API_URL = 'https://opencode.ai/zen/v1/chat/completions'
-// const MAIN_MODEL = 'big-pickle'
-const MAIN_MODEL = 'big-pickle'
+const GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
+const MAIN_MODEL = 'gemini-3.1-flash-lite'
 
 export interface ChatMessage {
   role: 'user' | 'model'
@@ -10,6 +9,30 @@ export interface ChatMessage {
 }
 
 const DEFAULT_SYSTEM_PROMPT = `You are an AI assistant in Tesseract, an Integrated Thinking Environment. Tesseract is the graduation project of the Mason team: Seif Zakaria, Omar Adel, Beshoy Mahrous, and Boles Sa'ad. Help users think through ideas, refine notes, and answer questions. Be concise and direct.`
+
+const MAX_RETRIES = 5
+const BASE_DELAY_MS = 1000
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function toGoogleContents(messages: { role: string; content: string }[]) {
+  const systemMsgs = messages.filter((m) => m.role === 'system')
+  const rest = messages.filter((m) => m.role !== 'system')
+
+  const contents = rest.map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }))
+
+  const systemInstruction =
+    systemMsgs.length > 0
+      ? { parts: systemMsgs.map((m) => ({ text: m.content })) }
+      : undefined
+
+  return { contents, systemInstruction }
+}
 
 async function zenChat(
   messages: { role: string; content: string }[],
@@ -20,38 +43,61 @@ async function zenChat(
     throw new Error('OPENCODE_ZEN_API_KEY is not set in .env')
   }
 
-  const response = await fetch(ZEN_API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: options?.model ?? MAIN_MODEL,
-      messages,
-      max_tokens: options?.maxTokens ?? 4096,
-      temperature: options?.temperature ?? 0.7
-    })
-  })
+  const model = options?.model ?? MAIN_MODEL
+  const url = `${GOOGLE_API_BASE}/${model}:generateContent?key=${apiKey}`
+  const { contents, systemInstruction } = toGoogleContents(messages)
 
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`Zen API error (${response.status}): ${error}`)
-  }
-
-  const data = await response.json()
-  const choice = data.choices?.[0]?.message
-  let result = choice?.content?.trim()
-  if (!result) {
-    const reasoning = choice?.reasoning_content?.trim()
-    if (reasoning) {
-      console.info('[zenChat] Using reasoning_content fallback')
-      result = reasoning
-    } else {
-      console.warn('[zenChat] Empty content. Model response:', JSON.stringify(data).slice(0, 500))
+  let lastError: Error | null = null
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    const body: Record<string, unknown> = {
+      contents,
+      generationConfig: {
+        maxOutputTokens: options?.maxTokens ?? 4096,
+        temperature: options?.temperature ?? 0.7
+      }
     }
+    if (systemInstruction) {
+      body.systemInstruction = systemInstruction
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+      const result = text?.trim()
+      if (!result) {
+        console.warn('[zenChat] Empty content. Response:', JSON.stringify(data).slice(0, 500))
+        // try to extract from reasoning
+        const reasoning = data.candidates?.[0]?.content?.parts?.find(
+          (p: { text?: string; reasoning?: string }) => p.reasoning
+        )
+        if (reasoning?.reasoning) {
+          console.info('[zenChat] Using reasoning fallback')
+          return reasoning.reasoning.trim()
+        }
+      }
+      return result || ''
+    }
+
+    if (response.status === 429 && attempt < MAX_RETRIES) {
+      const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1) + Math.random() * 500
+      console.warn(
+        `[zenChat] Rate limited (429). Retrying in ${Math.round(delay)}ms (attempt ${attempt}/${MAX_RETRIES})`
+      )
+      await sleep(delay)
+      continue
+    }
+
+    const error = await response.text()
+    throw new Error(`Google AI API error (${response.status}): ${error}`)
   }
-  return result || ''
+
+  throw lastError ?? new Error('zenChat: exceeded max retries')
 }
 
 export async function generateAIResponse(
@@ -114,7 +160,7 @@ export async function generateAutocomplete(textBefore: string): Promise<string> 
           content: recentContext ? `${recentContext}\n${lastLine}` : lastLine
         }
       ],
-      { maxTokens: 4096, temperature: 0.2, model: 'big-pickle' }
+      { maxTokens: 4096, temperature: 0.2, model: 'gemini-3.1-flash-lite' }
     )
     const match = text?.match(/CONTINUATION:(.+)/s)
     const result = match?.[1]?.trim() || text?.trim() || ''
