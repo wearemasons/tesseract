@@ -34,12 +34,12 @@ Three AI personas — `Visionary`, `Skeptic`, `Pragmatist` — convene and debat
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|---|---|
-| `Ctrl+K` | Command palette |
-| `Ctrl+B` | Toggle notes sidebar |
-| `Ctrl+Shift+B` | Toggle AI sidebar |
-| `Alt+A` | Toggle code autocomplete |
+| Shortcut             | Action                         |
+| -------------------- | ------------------------------ |
+| `Ctrl+K`             | Command palette                |
+| `Ctrl+B`             | Toggle notes sidebar           |
+| `Ctrl+Shift+B`       | Toggle AI sidebar              |
+| `Alt+A`              | Toggle code autocomplete       |
 | `Ctrl+Space` / `Tab` | Accept autocomplete suggestion |
 
 ---

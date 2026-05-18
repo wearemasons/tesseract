@@ -9,27 +9,35 @@ Tesseract is an Integrated Thinking Environment — a desktop app for writing no
 ## Features
 
 ### Notes Mode
+
 Rich markdown editing via MDX Editor (Lexical-based) with real-time rendering, auto-save (3s throttle + save-on-blur), and a sidebar sorted by last edit time. Create and delete notes via native OS dialogs.
 
 ### AI Companion
+
 An AI sidebar powered by [OpenCode Zen](https://opencode.ai/zen) that answers questions about your current note. Type `/write` to have the AI rewrite the full note — it sees the entire document and outputs complete updated markdown.
 
 ### Council of Thought
+
 A multi-perspective debate arena where three AI personas argue your idea:
+
 - **The Visionary** — argues the upside and potential
 - **The Skeptic** — attacks flaws, risks, and blind spots
 - **The Pragmatist** — focuses on execution and resources
 
 ### Command Palette
+
 `Ctrl+K` opens a searchable command palette with controls for font size (inc/dec/reset), toggling dark/light theme, picking color themes, and toggling code autocomplete.
 
 ### Color Themes
+
 `Ctrl+K` → "Pick Theme..." opens a theme picker dialog with multiple color schemes. Each theme overrides the app's CSS custom properties — currently includes Default, Amber Glow, Violet, Valentine, Gothic, Kodama Grave, and Masons.
 
 ### Code Autocomplete
+
 AI-powered inline autocomplete as you type. Toggle with `Alt+A`. Accept suggestions with `Ctrl+Space` or `Tab`. Visual border-flash feedback when toggled.
 
 ### Shared Config
+
 Keyboard shortcuts:
 | Shortcut | Action |
 |---|---|
@@ -45,17 +53,17 @@ Window remembers a minimum size of 800×500.
 
 ## Tech Stack
 
-| Layer | Tech |
-|---|---|
-| Desktop shell | Electron + electron-vite |
-| UI | React 19 + TypeScript + Tailwind CSS v4 |
-| Editor | MDX Editor (Lexical) |
-| State | Jotai |
-| Persistence | better-sqlite3 + fs-extra |
-| AI inference | OpenCode Zen API (`big-pickle` model) |
-| UI components | shadcn/ui (Dialog, Command, Button) |
-| Icons | lucide-react via react-icons/lu |
-| Plugins | Tailwind Typography, tailwindcss-animate |
+| Layer         | Tech                                     |
+| ------------- | ---------------------------------------- |
+| Desktop shell | Electron + electron-vite                 |
+| UI            | React 19 + TypeScript + Tailwind CSS v4  |
+| Editor        | MDX Editor (Lexical)                     |
+| State         | Jotai                                    |
+| Persistence   | better-sqlite3 + fs-extra                |
+| AI inference  | OpenCode Zen API (`big-pickle` model)    |
+| UI components | shadcn/ui (Dialog, Command, Button)      |
+| Icons         | lucide-react via react-icons/lu          |
+| Plugins       | Tailwind Typography, tailwindcss-animate |
 
 Notes are stored as `.md` files under `~/Tesseract/Notes/`. Sessions and messages in SQLite at `~/Tesseract/tesseract.db`.
 
@@ -142,6 +150,7 @@ A thin context bridge (`contextBridge.exposeInMainWorld`) that exposes typed API
 #### Renderer
 
 React 19 with Jotai for state. Atoms fall into three tiers:
+
 - **Ephemeral** — `commandPaletteOpenAtom`, `selectedNoteIndexAtom` (reset on reload)
 - **localStorage-persisted** — `themeAtom` (via `atomWithStorage`)
 - **SQLite-persisted** — `appModeAtom`, `fontSizeAtom`, `aiMessagesAtom`, `councilMessagesAtom`, `aiSidebarWidthAtom` (synced via `sessionStorage.ts`)
@@ -168,6 +177,7 @@ User opens app
 ```
 
 SQLite schema (`~/Tesseract/tesseract.db`):
+
 - `sessions` — per-session UI state (mode, font size, theme, sidebar width, …)
 - `ai_messages` — AI chat history (role, content, timestamp, FK → sessions)
 - `council_messages` — Council debate log (persona, content, timestamp, FK → sessions)
@@ -176,15 +186,15 @@ SQLite schema (`~/Tesseract/tesseract.db`):
 
 ### Data Flow
 
-| Data | Storage | Access |
-|---|---|---|
-| Notes | `~/Tesseract/Notes/*.md` | Main process `fs-extra`, IPC to renderer |
-| Session state | SQLite `sessions` table | IPC → sessionStorage.ts → Jotai atoms |
-| AI messages | SQLite `ai_messages` table | Per-append persist, bulk load on session restore |
-| Council messages | SQLite `council_messages` table | Per-append persist, bulk load on session restore |
-| Window bounds | SQLite `meta` table (key=`window_state`) | On close + debounced on resize/move |
-| Theme preference | localStorage | `atomWithStorage('theme')` |
-| AI response | Transient (not stored) | Generated on demand via Zen API |
+| Data             | Storage                                  | Access                                           |
+| ---------------- | ---------------------------------------- | ------------------------------------------------ |
+| Notes            | `~/Tesseract/Notes/*.md`                 | Main process `fs-extra`, IPC to renderer         |
+| Session state    | SQLite `sessions` table                  | IPC → sessionStorage.ts → Jotai atoms            |
+| AI messages      | SQLite `ai_messages` table               | Per-append persist, bulk load on session restore |
+| Council messages | SQLite `council_messages` table          | Per-append persist, bulk load on session restore |
+| Window bounds    | SQLite `meta` table (key=`window_state`) | On close + debounced on resize/move              |
+| Theme preference | localStorage                             | `atomWithStorage('theme')`                       |
+| AI response      | Transient (not stored)                   | Generated on demand via Zen API                  |
 
 ## Project Structure
 

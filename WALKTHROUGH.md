@@ -21,18 +21,19 @@ Per the graduation project submission requirements (due **May 11, 2026** at 11:5
 
 ## What's Inside
 
-| File | Purpose |
-|---|---|
-| `WALKTHROUGH.md` | This file — orientation for the reviewer |
-| `demo-video.mp4` | Functional demo recording |
-| `presentation.pptx` | Final presentation slides |
-| `tesseract/README.md` | Project overview, features, tech stack, setup instructions |
-| `tesseract/resources/welcome.md` | First-launch note shown to new users |
-| `tesseract/src/` | All source code (main, preload, renderer, shared) |
+| File                             | Purpose                                                    |
+| -------------------------------- | ---------------------------------------------------------- |
+| `WALKTHROUGH.md`                 | This file — orientation for the reviewer                   |
+| `demo-video.mp4`                 | Functional demo recording                                  |
+| `presentation.pptx`              | Final presentation slides                                  |
+| `tesseract/README.md`            | Project overview, features, tech stack, setup instructions |
+| `tesseract/resources/welcome.md` | First-launch note shown to new users                       |
+| `tesseract/src/`                 | All source code (main, preload, renderer, shared)          |
 
 ## Quick Start
 
-*we used [pnpm](https://pnpm.io/installation) as our package manager due to its speed and efficiency over npm, but you can use npm if you prefer to use it instead*
+_we used [pnpm](https://pnpm.io/installation) as our package manager due to its speed and efficiency over npm, but you can use npm if you prefer to use it instead_
+
 ```bash
 pnpm install
 pnpm dev
@@ -42,4 +43,4 @@ Requires `OPENCODE_ZEN_API_KEY` in `.env` for AI features. See `README.md` for d
 
 ---
 
-*Built by Seif Zakaria, Omar Adel, Beshoy Mahrous, Boles Sa'ad — Masons*
+_Built by Seif Zakaria, Omar Adel, Beshoy Mahrous, Boles Sa'ad — Masons_

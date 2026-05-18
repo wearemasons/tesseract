@@ -127,7 +127,12 @@ export const AutocompletePlugin = () => {
 
       if (textBefore.trim().length < 3) return
 
-      console.info('[Autocomplete] Context lines:', contextAbove.split('\n').length, '| Cursor line:', textBefore)
+      console.info(
+        '[Autocomplete] Context lines:',
+        contextAbove.split('\n').length,
+        '| Cursor line:',
+        textBefore
+      )
       const completion = await window.context.generateAutocomplete(fullText)
       if (completion && completion.trim()) {
         console.info('[Autocomplete] Got completion:', completion.substring(0, 80))

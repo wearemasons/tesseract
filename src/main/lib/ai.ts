@@ -1,57 +1,89 @@
 import 'dotenv/config'
+import { GoogleGenAI } from '@google/genai'
 
-const ZEN_API_URL = 'https://opencode.ai/zen/v1/chat/completions'
-// const MAIN_MODEL = 'big-pickle'
-const MAIN_MODEL = 'big-pickle'
+const MODEL = 'gemini-flash-lite-latest'
+const MAX_RETRIES = 5
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+function getAI(): GoogleGenAI {
+  const apiKey = process.env.GOOGLE_API_KEY
+  if (!apiKey) {
+    throw new Error('GOOGLE_API_KEY is not set in .env')
+  }
+  return new GoogleGenAI({ apiKey })
+}
+
+const DEFAULT_SYSTEM_PROMPT = `You are an AI assistant in Tesseract, an Integrated Thinking Environment. Tesseract is the graduation project of the Mason team: Seif Zakaria, Omar Adel, Beshoy Mahrous, and Boles Sa'ad. Help users think through ideas, refine notes, and answer questions. Be concise and direct.`
 
 export interface ChatMessage {
   role: 'user' | 'model'
   text: string
 }
 
-const DEFAULT_SYSTEM_PROMPT = `You are an AI assistant in Tesseract, an Integrated Thinking Environment. Tesseract is the graduation project of the Mason team: Seif Zakaria, Omar Adel, Beshoy Mahrous, and Boles Sa'ad. Help users think through ideas, refine notes, and answer questions. Be concise and direct.`
-
-async function zenChat(
+async function geminiChat(
   messages: { role: string; content: string }[],
-  options?: { maxTokens?: number; temperature?: number; model?: string }
+  options?: { maxTokens?: number; temperature?: number }
 ): Promise<string> {
-  const apiKey = process.env.OPENCODE_ZEN_API_KEY
-  if (!apiKey) {
-    throw new Error('OPENCODE_ZEN_API_KEY is not set in .env')
-  }
+  const ai = getAI()
 
-  const response = await fetch(ZEN_API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: options?.model ?? MAIN_MODEL,
-      messages,
-      max_tokens: options?.maxTokens ?? 4096,
-      temperature: options?.temperature ?? 0.7
-    })
-  })
+  let lastError: Error | null = null
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const systemMessage = messages.find((m) => m.role === 'system')
+      const nonSystemMessages = messages.filter((m) => m.role !== 'system')
 
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`Zen API error (${response.status}): ${error}`)
-  }
+      const config: Record<string, unknown> = {
+        maxOutputTokens: options?.maxTokens ?? 4096,
+        temperature: options?.temperature ?? 0.7
+      }
+      if (systemMessage) {
+        config.systemInstruction = { parts: [{ text: systemMessage.content }] }
+      }
 
-  const data = await response.json()
-  const choice = data.choices?.[0]?.message
-  let result = choice?.content?.trim()
-  if (!result) {
-    const reasoning = choice?.reasoning_content?.trim()
-    if (reasoning) {
-      console.info('[zenChat] Using reasoning_content fallback')
-      result = reasoning
-    } else {
-      console.warn('[zenChat] Empty content. Model response:', JSON.stringify(data).slice(0, 500))
+      const contents = nonSystemMessages.map((m) => ({
+        role: m.role === 'assistant' ? 'model' : m.role,
+        parts: [{ text: m.content }]
+      }))
+
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents,
+        config
+      })
+
+      lastError = null
+      const text = response.text
+      if (!text) {
+        console.warn('[geminiChat] Empty response text')
+        console.warn('[geminiChat] promptFeedback:', JSON.stringify(response.promptFeedback))
+        console.warn(
+          '[geminiChat] candidates:',
+          JSON.stringify(
+            response.candidates?.map((c) => ({
+              finishReason: c.finishReason,
+              finishMessage: c.finishMessage
+            }))
+          )
+        )
+        return ''
+      }
+      return text.trim()
+    } catch (error) {
+      if ((error as { status?: number }).status === 429 && attempt < MAX_RETRIES) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30_000)
+        console.warn(
+          `[geminiChat] Rate limited (429). Retrying in ${delay}ms (attempt ${attempt}/${MAX_RETRIES})`
+        )
+        await sleep(delay)
+        lastError = error as Error
+        continue
+      }
+      throw error
     }
   }
-  return result || ''
+
+  throw lastError || new Error('Gemini API request failed after retries')
 }
 
 export async function generateAIResponse(
@@ -78,10 +110,12 @@ export async function generateAIResponse(
 
   if (prompt) {
     messages.push({ role: 'user', content: prompt })
+  } else {
+    messages.push({ role: 'user', content: 'Apply the context provided above.' })
   }
 
   try {
-    const text = await zenChat(messages)
+    const text = await geminiChat(messages)
     console.info('[AI] Response length:', text.length, '| Preview:', text.substring(0, 120))
     return text
   } catch (error) {
@@ -91,7 +125,7 @@ export async function generateAIResponse(
 }
 
 export async function generateAutocomplete(textBefore: string): Promise<string> {
-  if (!process.env.OPENCODE_ZEN_API_KEY) {
+  if (!process.env.GOOGLE_API_KEY) {
     console.warn('[Autocomplete] No API key configured')
     return ''
   }
@@ -102,23 +136,25 @@ export async function generateAutocomplete(textBefore: string): Promise<string> 
     const recentContext = lines.slice(-10).join('\n')
 
     console.info('[Autocomplete] Context lines:', lines.length, '| Cursor line:', lastLine)
-    const text = await zenChat(
+    const text = await geminiChat(
       [
         {
           role: 'system',
           content:
-            'You are a text completion engine. First reason step by step about what comes next. Then output your final completion on a new line starting with exactly "CONTINUATION:" followed by the completion text.'
+            'You are a text completion engine. Output only the completion text that naturally continues from the given context. Do not include any explanation or preamble.'
         },
         {
           role: 'user',
           content: recentContext ? `${recentContext}\n${lastLine}` : lastLine
         }
       ],
-      { maxTokens: 4096, temperature: 0.2, model: 'big-pickle' }
+      { maxTokens: 4096, temperature: 0.2 }
     )
-    const match = text?.match(/CONTINUATION:(.+)/s)
-    const result = match?.[1]?.trim() || text?.trim() || ''
-    console.info('[Autocomplete] zenChat returned:', result ? result.substring(0, 80) : '(empty)')
+    const result = text?.trim() || ''
+    console.info(
+      '[Autocomplete] geminiChat returned:',
+      result ? result.substring(0, 80) : '(empty)'
+    )
     return result
   } catch (error) {
     console.error('[Autocomplete] Error in main process:', error)

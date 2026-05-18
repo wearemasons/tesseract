@@ -15,10 +15,10 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Shimmer } from './ai/shimmer'
 
-const WRITE_SYSTEM_PROMPT = `You are editing a markdown note. The user wants you to modify it.
-You will receive the current note content and a user request.
-Output the COMPLETE updated markdown file with the requested changes applied.
-Do not include any explanation, commentary, or markdown fences — output ONLY the note content.`
+const WRITE_SYSTEM_PROMPT = `You are a markdown editing assistant. You will receive the current note content and a user request.
+Analyze the request. If the user wants to append content or add to the end, output ONLY the new content wrapped in <append>...</append> tags.
+If the user wants to modify, rewrite, or replace the existing content, output the COMPLETE updated markdown wrapped in <rewrite>...</rewrite> tags.
+Do not include any explanation, commentary, or markdown fences outside the tags. Output ONLY the tags and the requested content.`
 
 export const AICompanion = () => {
   const selectedNote = useAtomValue(selectedNoteAtom)
@@ -65,26 +65,49 @@ export const AICompanion = () => {
 
       if (isWriteCommand) {
         const writeContext = `Current note content:\n${selectedNote?.content || ''}\n\nUser request:\n${writePrompt || cleanText}`
-        const response = await window.context.generateAIResponse(
+        const rawResponse = await window.context.generateAIResponse(
           '',
           history,
           writeContext,
           WRITE_SYSTEM_PROMPT
         )
-        if (response && selectedNote) {
-          await saveNote(response)
-          setPendingWriteContent(response)
+        if (rawResponse && selectedNote) {
+          let newContent = rawResponse.trim()
+          let responseDisplay = rawResponse.trim()
+
+          const rewriteMatch = rawResponse.match(/<rewrite>([\s\S]*?)<\/rewrite>/)
+          const appendMatch = rawResponse.match(/<append>([\s\S]*?)<\/append>/)
+
+          if (rewriteMatch) {
+            newContent = rewriteMatch[1].trim()
+            responseDisplay = newContent
+          } else if (appendMatch) {
+            const appendedText = appendMatch[1].trim()
+            newContent = selectedNote.content
+              ? `${selectedNote.content}\n\n${appendedText}`
+              : appendedText
+            responseDisplay = appendedText
+          } else {
+            newContent = newContent
+              .replace(/^```[a-z]*\n/, '')
+              .replace(/\n```$/, '')
+              .trim()
+            responseDisplay = newContent
+          }
+
+          await saveNote(newContent)
+          setPendingWriteContent(newContent)
           setWriteConfirm(selectedNote.title)
           setTimeout(() => setWriteConfirm(null), 3000)
+
+          const displayContent = `✏️ **Written to "${selectedNote.title || 'note'}"**\n\n${responseDisplay}`
+          setMessages((prev) => [...prev, { role: 'assistant', content: displayContent }])
+          persistAiMessage('assistant', displayContent)
+        } else {
+          const displayContent = 'Sorry, I could not generate content. Please check your API key.'
+          setMessages((prev) => [...prev, { role: 'assistant', content: displayContent }])
+          persistAiMessage('assistant', displayContent)
         }
-        const displayContent = response
-          ? `✏️ **Written to "${selectedNote?.title || 'note'}"**\n\n${response}`
-          : 'Sorry, I could not generate content. Please check your API key.'
-        setMessages((prev) => [...prev, { role: 'assistant', content: displayContent }])
-        persistAiMessage(
-          'assistant',
-          response || 'Sorry, I could not generate content. Please check your API key.'
-        )
       } else {
         const response = await window.context.generateAIResponse(cleanText, history, fullContext)
         setMessages((prev) => [...prev, { role: 'assistant', content: response }])
@@ -170,7 +193,7 @@ export const AICompanion = () => {
           showCommands={true}
         />
         <p className="text-[10px] text-center text-muted-foreground mt-2 opacity-50">
-          Powered by Big Pickle via OpenCode Zen
+          Powered by Gemini Flash Lite
         </p>
       </div>
     </div>

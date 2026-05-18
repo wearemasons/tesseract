@@ -72,13 +72,13 @@
 
 ## Production Notes
 
-| Segment | What to prepare |
-|---|---|
-| Opening | Have a note pre-written with some markdown content |
-| Command Palette | Reset font size before recording so change is visible |
-| Theme Pick | Start on Default theme, switch to Amber Glow for contrast |
-| AI /write | Have the AI key set; use a short, simple note for quick turnaround |
-| Council | Pre-type a short idea so you can hit send immediately |
-| Autocomplete | Type a common phrase like "The main advantage of this approach is" |
-| Audio | Use a lapel mic or quiet room — voiceover can be recorded after |
-| Edits | Cut pauses; speed up AI loading with a quick jump cut |
+| Segment         | What to prepare                                                    |
+| --------------- | ------------------------------------------------------------------ |
+| Opening         | Have a note pre-written with some markdown content                 |
+| Command Palette | Reset font size before recording so change is visible              |
+| Theme Pick      | Start on Default theme, switch to Amber Glow for contrast          |
+| AI /write       | Have the AI key set; use a short, simple note for quick turnaround |
+| Council         | Pre-type a short idea so you can hit send immediately              |
+| Autocomplete    | Type a common phrase like "The main advantage of this approach is" |
+| Audio           | Use a lapel mic or quiet room — voiceover can be recorded after    |
+| Edits           | Cut pauses; speed up AI loading with a quick jump cut              |
