@@ -1,13 +1,19 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { $getSelection, $isRangeSelection, $createTextNode } from 'lexical'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import {
+  $getSelection,
+  $isRangeSelection,
+  $createTextNode,
+  KEY_TAB_COMMAND,
+  COMMAND_PRIORITY_CRITICAL
+} from 'lexical'
+import { useEffect, useRef, useCallback } from 'react'
 import { useAtomValue } from 'jotai'
 import { autocompleteEnabledAtom } from '@renderer/store'
 import { $createAutocompleteNode, $isAutocompleteNode } from './AutocompleteNode'
 
 export const AutocompletePlugin = () => {
   const [editor] = useLexicalComposerContext()
-  const [suggestion, setSuggestion] = useState<string | null>(null)
+  const suggestionRef = useRef<string | null>(null)
   const autocompleteEnabled = useAtomValue(autocompleteEnabledAtom)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const ghostNodeKey = useRef<string | null>(null)
@@ -24,7 +30,25 @@ export const AutocompletePlugin = () => {
         }
       })
     }
-    setSuggestion(null)
+    suggestionRef.current = null
+  }, [editor])
+
+  const commitSuggestion = useCallback(() => {
+    editor.update(
+      () => {
+        if (!ghostNodeKey.current || !suggestionRef.current) return
+
+        const node = editor.getEditorState()._nodeMap.get(ghostNodeKey.current)
+        if (node && $isAutocompleteNode(node)) {
+          const textNode = $createTextNode(suggestionRef.current)
+          node.replace(textNode)
+          textNode.selectEnd()
+        }
+      },
+      { tag: 'autocomplete' }
+    )
+    suggestionRef.current = null
+    ghostNodeKey.current = null
   }, [editor])
 
   useEffect(() => {
@@ -56,16 +80,26 @@ export const AutocompletePlugin = () => {
   }, [editor, clearSuggestion, autocompleteEnabled])
 
   useEffect(() => {
+    return editor.registerCommand(
+      KEY_TAB_COMMAND,
+      (e: KeyboardEvent) => {
+        if (suggestionRef.current && ghostNodeKey.current) {
+          e.preventDefault()
+          e.stopPropagation()
+          commitSuggestion()
+          return true
+        }
+        return false
+      },
+      COMMAND_PRIORITY_CRITICAL
+    )
+  }, [editor, commitSuggestion])
+
+  useEffect(() => {
     const root = editor.getRootElement()
     if (!root) return
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Tab' && suggestion && ghostNodeKey.current) {
-        e.preventDefault()
-        e.stopPropagation()
-        commitSuggestion()
-        return
-      }
-      if (e.ctrlKey && e.key === ' ' && suggestion && ghostNodeKey.current) {
+      if (e.ctrlKey && e.key === ' ' && suggestionRef.current && ghostNodeKey.current) {
         e.preventDefault()
         e.stopPropagation()
         commitSuggestion()
@@ -73,8 +107,7 @@ export const AutocompletePlugin = () => {
     }
     root.addEventListener('keydown', handler)
     return () => root.removeEventListener('keydown', handler)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, suggestion])
+  }, [editor, commitSuggestion])
 
   useEffect(() => {
     if (!autocompleteEnabled) {
@@ -136,7 +169,7 @@ export const AutocompletePlugin = () => {
       const completion = await window.context.generateAutocomplete(fullText)
       if (completion && completion.trim()) {
         console.info('[Autocomplete] Got completion:', completion.substring(0, 80))
-        setSuggestion(completion)
+        suggestionRef.current = completion
         editor.update(
           () => {
             const selection = $getSelection()
@@ -156,24 +189,6 @@ export const AutocompletePlugin = () => {
     } finally {
       isFetchingRef.current = false
     }
-  }
-
-  const commitSuggestion = () => {
-    editor.update(
-      () => {
-        if (!ghostNodeKey.current || !suggestion) return
-
-        const node = editor.getEditorState()._nodeMap.get(ghostNodeKey.current)
-        if (node && $isAutocompleteNode(node)) {
-          const textNode = $createTextNode(suggestion)
-          node.replace(textNode)
-          textNode.selectEnd()
-        }
-      },
-      { tag: 'autocomplete' }
-    )
-    setSuggestion(null)
-    ghostNodeKey.current = null
   }
 
   return null
