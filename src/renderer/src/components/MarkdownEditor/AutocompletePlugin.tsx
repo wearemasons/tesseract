@@ -20,8 +20,8 @@ export const AutocompletePlugin = () => {
   const isFetchingRef = useRef(false)
 
   const clearSuggestion = useCallback(() => {
-    if (ghostNodeKey.current) {
-      const key = ghostNodeKey.current
+    const key = ghostNodeKey.current
+    if (key) {
       ghostNodeKey.current = null
       editor.update(() => {
         const node = editor.getEditorState()._nodeMap.get(key)
@@ -34,21 +34,25 @@ export const AutocompletePlugin = () => {
   }, [editor])
 
   const commitSuggestion = useCallback(() => {
+    const key = ghostNodeKey.current
+    const text = suggestionRef.current
+
+    if (!key || !text) return
+
+    ghostNodeKey.current = null
+    suggestionRef.current = null
+
     editor.update(
       () => {
-        if (!ghostNodeKey.current || !suggestionRef.current) return
-
-        const node = editor.getEditorState()._nodeMap.get(ghostNodeKey.current)
+        const node = editor.getEditorState()._nodeMap.get(key)
         if (node && $isAutocompleteNode(node)) {
-          const textNode = $createTextNode(suggestionRef.current)
+          const textNode = $createTextNode(text)
           node.replace(textNode)
           textNode.selectEnd()
         }
       },
       { tag: 'autocomplete' }
     )
-    suggestionRef.current = null
-    ghostNodeKey.current = null
   }, [editor])
 
   useEffect(() => {
