@@ -55,17 +55,8 @@ async function geminiChat(
       lastError = null
       const text = response.text
       if (!text) {
-        console.warn('[geminiChat] Empty response text')
-        console.warn('[geminiChat] promptFeedback:', JSON.stringify(response.promptFeedback))
-        console.warn(
-          '[geminiChat] candidates:',
-          JSON.stringify(
-            response.candidates?.map((c) => ({
-              finishReason: c.finishReason,
-              finishMessage: c.finishMessage
-            }))
-          )
-        )
+        // Only log at debug/info level since empty responses are common for autocompletion
+        console.info('[geminiChat] Empty response text (finishReason: STOP)')
         return ''
       }
       return text.trim()
