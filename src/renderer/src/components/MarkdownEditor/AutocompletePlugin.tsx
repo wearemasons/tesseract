@@ -1,11 +1,5 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import {
-  $getSelection,
-  $isRangeSelection,
-  $createTextNode,
-  KEY_TAB_COMMAND,
-  COMMAND_PRIORITY_CRITICAL
-} from 'lexical'
+import { $getSelection, $isRangeSelection, $createTextNode } from 'lexical'
 import { useEffect, useRef, useCallback } from 'react'
 import { useAtomValue } from 'jotai'
 import { autocompleteEnabledAtom } from '@renderer/store'
@@ -84,33 +78,24 @@ export const AutocompletePlugin = () => {
   }, [editor, clearSuggestion, autocompleteEnabled])
 
   useEffect(() => {
-    return editor.registerCommand(
-      KEY_TAB_COMMAND,
-      (e: KeyboardEvent) => {
-        if (suggestionRef.current && ghostNodeKey.current) {
-          e.preventDefault()
-          e.stopPropagation()
-          commitSuggestion()
-          return true
-        }
-        return false
-      },
-      COMMAND_PRIORITY_CRITICAL
-    )
-  }, [editor, commitSuggestion])
-
-  useEffect(() => {
     const root = editor.getRootElement()
     if (!root) return
     const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && suggestionRef.current && ghostNodeKey.current) {
+        e.preventDefault()
+        e.stopPropagation()
+        commitSuggestion()
+        return
+      }
       if (e.ctrlKey && e.key === ' ' && suggestionRef.current && ghostNodeKey.current) {
         e.preventDefault()
         e.stopPropagation()
         commitSuggestion()
       }
     }
-    root.addEventListener('keydown', handler)
-    return () => root.removeEventListener('keydown', handler)
+    // Use capture phase to ensure we intercept it before MDXEditor
+    root.addEventListener('keydown', handler, true)
+    return () => root.removeEventListener('keydown', handler, true)
   }, [editor, commitSuggestion])
 
   useEffect(() => {
