@@ -260,6 +260,11 @@ export const saveCouncilMessage = (sessionId: number, persona: string, content: 
   ).run(sessionId, persona, content, Date.now())
 }
 
+export const clearAiMessages = (sessionId: number): void => {
+  const d = getDb()
+  d.prepare('DELETE FROM ai_messages WHERE session_id = ?').run(sessionId)
+}
+
 export const deleteSession = (id: number): void => {
   const d = getDb()
   d.prepare('DELETE FROM sessions WHERE id = ?').run(id)

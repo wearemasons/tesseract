@@ -68,6 +68,7 @@ export interface SessionApi {
   getCouncilMessages: (sessionId: number) => Promise<CouncilMessageRow[]>
   saveAiMessage: (sessionId: number, role: string, content: string) => Promise<void>
   saveCouncilMessage: (sessionId: number, persona: string, content: string) => Promise<void>
+  clearAiMessages: (sessionId: number) => Promise<void>
   delete: (id: number) => Promise<void>
   loadLatest: () => Promise<SessionLoadResult | null>
   load: (id: number) => Promise<SessionLoadResult | null>

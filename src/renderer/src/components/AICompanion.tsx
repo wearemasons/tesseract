@@ -5,7 +5,7 @@ import {
   saveNoteAtom,
   pendingWriteContentAtom
 } from '@renderer/store'
-import { persistAiMessage } from '@renderer/store/sessionStorage'
+import { persistAiMessage, clearPersistedAiMessages } from '@renderer/store/sessionStorage'
 import { cn } from '@renderer/utils'
 import { useState, useRef, useEffect } from 'react'
 import { LuBrain, LuLoader, LuFilePen } from 'react-icons/lu'
@@ -40,6 +40,13 @@ export const AICompanion = () => {
   const handleSend = async (text: string) => {
     if (isLoading) return
     setIsLoading(true)
+
+    if (text.trim() === '/clear') {
+      setMessages([])
+      await clearPersistedAiMessages()
+      setIsLoading(false)
+      return
+    }
 
     const isWriteCommand = text.trim().startsWith('/write')
     const writePrompt = isWriteCommand ? text.trim().replace(/^\/write\s*/, '') : text

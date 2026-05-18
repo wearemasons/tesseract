@@ -46,6 +46,7 @@ try {
         ipcRenderer.invoke('session:saveAiMessage', sessionId, role, content),
       saveCouncilMessage: (sessionId, persona, content) =>
         ipcRenderer.invoke('session:saveCouncilMessage', sessionId, persona, content),
+      clearAiMessages: (sessionId) => ipcRenderer.invoke('session:clearAiMessages', sessionId),
       delete: (id) => ipcRenderer.invoke('session:delete', id),
       loadLatest: () => ipcRenderer.invoke('session:loadLatest'),
       load: (id) => ipcRenderer.invoke('session:load', id)

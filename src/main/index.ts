@@ -23,6 +23,7 @@ import {
   getCouncilMessages,
   saveAiMessage,
   saveCouncilMessage,
+  clearAiMessages,
   deleteSession,
   getWindowState,
   setWindowState,
@@ -202,6 +203,9 @@ app.whenReady().then(() => {
       saveCouncilMessage(sessionId, persona, content)
     }
   )
+  ipcMain.handle('session:clearAiMessages', (_, sessionId: number) => {
+    clearAiMessages(sessionId)
+  })
   ipcMain.handle('session:delete', (_, id: number) => deleteSession(id))
   ipcMain.handle('session:loadLatest', () => {
     if (activeSessionId) {

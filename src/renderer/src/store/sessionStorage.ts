@@ -148,3 +148,14 @@ export const persistCouncilMessage = async (persona: string, content: string): P
     // silently fail
   }
 }
+
+export const clearPersistedAiMessages = async (): Promise<void> => {
+  try {
+    const sessionId = await window.context.session.getActiveId()
+    if (sessionId != null) {
+      await window.context.session.clearAiMessages(sessionId)
+    }
+  } catch {
+    // silently fail
+  }
+}
